@@ -99,8 +99,10 @@
                             </p>
                         </div>
 
-                        <!-- Rating Section -->
-                        <CommentRatingSection v-if="mangaId > 0" :manga-id="mangaId" />
+                        <!-- Rating Section (Form để đánh giá) -->
+                        <div class="mb-6">
+                            <RatingSection v-if="mangaId > 0" :manga-id="mangaId" />
+                        </div>
 
                         <!-- Tabs -->
                         <div class="border-b border-slate-200 dark:border-slate-700">
@@ -113,6 +115,17 @@
                                 ]">
                                     Chương ({{ chapters.length || 0 }})
                                 </button>
+                                <button @click="activeTab = 'rating'" :class="[
+                                    'py-3 px-2 font-semibold text-sm border-b-2 transition-colors',
+                                    activeTab === 'rating'
+                                        ? 'border-primary text-primary'
+                                        : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                ]">
+                                    Đánh giá
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">
+                                        ({{ story.totalRatings || 0 }})
+                                    </span>
+                                </button>
                                 <button @click="activeTab = 'comments'" :class="[
                                     'py-3 px-2 font-semibold text-sm border-b-2 transition-colors',
                                     activeTab === 'comments'
@@ -120,6 +133,8 @@
                                         : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                                 ]">
                                     Bình luận
+                                    <span class="text-sm text-slate-600 dark:text-slate-400">({{ story.comment_count ||
+                                        0 }})</span>
                                 </button>
                             </div>
                         </div>
@@ -127,6 +142,9 @@
                         <!-- Tab Content -->
                         <div v-if="activeTab === 'chapters'">
                             <StoryChapterList v-if="story" :chapters="chapters" :story-slug="story?.slug || ''" />
+                        </div>
+                        <div v-else-if="activeTab === 'rating'">
+                            <RatingList v-if="mangaId > 0" :manga-id="mangaId" />
                         </div>
                         <div v-else-if="activeTab === 'comments'">
                             <CommentSection :commentable-type="'Manga'" :commentable-id="mangaId" />
@@ -167,6 +185,7 @@ const { data: mangaData, pending: mangaPending } = useLazyHttp<{
         status: string
         views: number
         rating: number
+        total_ratings: number
         follows: number
         author: {
             id: number
@@ -181,6 +200,7 @@ const { data: mangaData, pending: mangaPending } = useLazyHttp<{
             name: string
             slug: string
         }>
+        comment_count: number
         chapters: Array<{
             id: number
             name: string
@@ -203,9 +223,11 @@ const story = computed(() => {
         coverImage: data.avatar,
         status: data.status,
         rating: data.rating || 0,
+        totalRatings: data.total_ratings || 0,
         categories: data.categories.map(c => c.name),
         description: data.description || '',
         views: data.views || 0,
+        comment_count: data.comment_count || 0,
         lastChapter: (() => {
             const lastChapter = data.chapters[data.chapters.length - 1]
             return lastChapter ? lastChapter.name : 'Chưa có'
@@ -225,7 +247,7 @@ const story = computed(() => {
 })
 
 const chapters = computed(() => story.value?.chapters || [])
-const activeTab = ref<'chapters' | 'comments'>('chapters')
+const activeTab = ref<'chapters' | 'rating' | 'comments'>('chapters')
 const descriptionExpanded = ref(false)
 const relatedStories = ref<any[]>([])
 

@@ -63,13 +63,55 @@ class RatingController extends Controller
     }
 
     /**
+     * Get list of ratings for a manga
+     */
+    public function index(Request $request, int $mangaId): JsonResponse
+    {
+        $manga = Manga::findOrFail($mangaId);
+        $page = Page::getOrCreateFor($manga);
+
+        $currentPage = (int) $request->query('page', 1);
+        $perPage = min((int) $request->query('per_page', 20), 50);
+
+        $ratings = MangaRating::where('page_id', $page->id)
+            ->with(['user:id,name,email,avatar'])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $currentPage);
+
+        return response()->json([
+            'ok' => true,
+            'data' => $ratings->getCollection()->map(function ($rating) {
+                return [
+                    'id' => $rating->id,
+                    'rating' => $rating->rating,
+                    'review' => $rating->review,
+                    'user' => $rating->user ? [
+                        'id' => $rating->user->id,
+                        'name' => $rating->user->name,
+                        'email' => $rating->user->email,
+                        'avatar' => $rating->user->avatar,
+                    ] : null,
+                    'created_at' => $rating->created_at->toISOString(),
+                    'updated_at' => $rating->updated_at->toISOString(),
+                ];
+            })->values(),
+            'pagination' => [
+                'current_page' => $ratings->currentPage(),
+                'last_page' => $ratings->lastPage(),
+                'per_page' => $ratings->perPage(),
+                'total' => $ratings->total(),
+            ],
+        ]);
+    }
+
+    /**
      * Submit or update rating
      */
     public function store(Request $request, int $mangaId): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthorized',
@@ -121,8 +163,8 @@ class RatingController extends Controller
     public function destroy(Request $request, int $mangaId): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthorized',

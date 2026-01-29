@@ -19,160 +19,221 @@ class CommentController extends Controller
 {
     /**
      * Get comments for a page (Manga or MangaChapter)
+     * Returns comments grouped by root_id (thread-based)
      */
     public function index(Request $request): JsonResponse
     {
         $request->validate([
             'commentable_type' => 'required|in:Manga,MangaChapter',
             'commentable_id' => 'required|integer',
-            'parent_id' => 'nullable|integer',
+            'root_id' => 'nullable|integer', // Load more replies for a specific root_id
             'page' => 'nullable|integer|min:1',
             'per_page' => 'nullable|integer|min:1|max:50',
         ]);
 
         $commentableType = $request->commentable_type;
         $commentableId = $request->commentable_id;
-        $parentId = $request->query('parent_id');
+        $rootId = $request->query('root_id');
+        $currentPage = (int) $request->query('page', 1);
+        $perPage = min((int) $request->query('per_page', 10), 50); // Mặc định 10 root comments
 
-        // Verify commentable exists and get/create page
-        if ($commentableType === 'Manga') {
-            $commentable = Manga::findOrFail($commentableId);
-        } else {
-            $commentable = MangaChapter::findOrFail($commentableId);
-        }
+        // Resolve commentable
+        $commentable = $commentableType === 'Manga'
+            ? Manga::findOrFail($commentableId)
+            : MangaChapter::findOrFail($commentableId);
 
         $page = Page::getOrCreateFor($commentable);
 
-        $cacheKey = "comments:page:{$page->id}:parent:{$parentId}";
-        $comments = Cache::remember($cacheKey, 300, function () use ($page, $parentId) {
-            $query = Comment::where('page_id', $page->id)
-                ->with([
-                    'user:id,name,email,avatar',
-                    'reactions' => function ($q) {
-                        $q->where('user_id', auth()->id());
-                    },
-                ]);
-
-            if ($parentId) {
-                $query->where('parent_id', $parentId);
-            } else {
-                $query->whereNull('parent_id');
-            }
-
-            // Order: pinned first, then by likes, then by date
-            $query->orderBy('is_pinned', 'desc')
-                ->orderBy('likes_count', 'desc')
-                ->orderBy('created_at', 'desc');
-
-            return $query->get();
-        });
-
-        // Only load direct replies (depth 1) for top-level comments
-        // Deeper replies will be lazy-loaded on demand
-        if (!$parentId) {
-            $commentIds = $comments->pluck('id');
-            // Only load depth 1 replies (direct children)
-            $replies = Comment::whereIn('parent_id', $commentIds)
-                ->where('depth', 1) // Only direct replies
-                ->with(['user:id,name,email,avatar', 'reactions' => function ($q) {
-                    $q->where('user_id', auth()->id());
-                }])
-                ->orderBy('created_at', 'asc')
-                ->get()
-                ->groupBy('parent_id');
-
-            $comments = $comments->map(function ($comment) use ($replies) {
-                return $this->transformComment($comment, $replies->get($comment->id, collect()));
-            });
-        } else {
-            $comments = $comments->map(function ($comment) {
-                return $this->transformComment($comment, collect());
-            });
+        // If root_id is provided, load more replies for that thread
+        if ($rootId) {
+            return $this->loadThreadReplies($page, $rootId, $currentPage, $perPage);
         }
 
-        $perPage = min($request->query('per_page', 20), 50);
-        $total = $comments->count();
-        $currentPage = $request->query('page', 1);
-        $offset = ($currentPage - 1) * $perPage;
-        $paginated = $comments->slice($offset, $perPage)->values();
+        // Load root comments (threads) - comments with root_id = null or root_id = id
+        $cacheKey = sprintf(
+            'comments:page:%d:roots:p:%d:pp:%d',
+            $page->id,
+            $currentPage,
+            $perPage
+        );
+
+        $result = Cache::tags(["comments:page:{$page->id}"])
+            ->remember($cacheKey, 300, function () use ($page, $currentPage, $perPage) {
+                // Get root comments (where root_id is null)
+                $query = Comment::where('page_id', $page->id)
+                    ->whereNull('root_id') // Root comments có root_id = null
+                    ->with([
+                        'user:id,name,email,avatar',
+                        'reactions' => fn ($q) => $q->where('user_id', auth()->id()),
+                    ])
+                    ->orderBy('is_pinned', 'desc')
+                    ->orderBy('likes_count', 'desc')
+                    ->orderBy('created_at', 'desc');
+
+                return $query->paginate($perPage, ['*'], 'page', $currentPage);
+            });
+
+        $rootComments = collect($result->items());
+
+        // Load initial replies for each root comment (3 replies đầu tiên)
+        if ($rootComments->isNotEmpty()) {
+            $rootIds = $rootComments->pluck('id');
+
+            // Load 3 replies đầu tiên cho mỗi root
+            $replies = Comment::whereIn('root_id', $rootIds)
+                ->with([
+                    'user:id,name,email,avatar',
+                    'parent.user:id,name', // Load parent user để hiển thị "Trả lời @username"
+                    'reactions' => fn ($q) => $q->where('user_id', auth()->id()),
+                ])
+                ->orderBy('root_id')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->groupBy('root_id')
+                ->map(function ($group) {
+                    // Chỉ lấy 3 replies đầu tiên
+                    return $group->take(3);
+                });
+
+            // Build thread structure
+            $threads = $rootComments->map(function ($rootComment) use ($replies) {
+                $threadReplies = $replies->get($rootComment->id, collect());
+                $totalReplies = Comment::where('root_id', $rootComment->id)->count();
+
+                return [
+                    'root' => $this->transformComment($rootComment, collect()),
+                    'replies' => $threadReplies->map(fn ($reply) => $this->transformComment($reply, collect()))->values(),
+                    'total_replies' => $totalReplies,
+                    'loaded_replies' => $threadReplies->count(),
+                ];
+            });
+        } else {
+            $threads = collect();
+        }
 
         return response()->json([
             'ok' => true,
-            'data' => $paginated,
+            'data' => $threads->values(),
             'page_id' => $page->id,
             'pagination' => [
-                'current_page' => $currentPage,
-                'last_page' => (int) ceil($total / $perPage),
-                'per_page' => $perPage,
-                'total' => $total,
+                'current_page' => $result->currentPage(),
+                'last_page' => $result->lastPage(),
+                'per_page' => $result->perPage(),
+                'total' => $result->total(),
             ],
         ]);
     }
 
     /**
-     * Create a new comment
+     * Load more replies for a specific thread (root_id)
      */
+    private function loadThreadReplies(Page $page, int $rootId, int $pageNum, int $perPage): JsonResponse
+    {
+        // Verify root comment exists (root_id must be null)
+        $rootComment = Comment::where('page_id', $page->id)
+            ->where('id', $rootId)
+            ->whereNull('root_id') // Root comment có root_id = null
+            ->firstOrFail();
+
+        $cacheKey = sprintf(
+            'comments:root:%d:replies:p:%d:pp:%d',
+            $rootId,
+            $pageNum,
+            $perPage
+        );
+
+        $result = Cache::tags(["comments:page:{$page->id}", "comments:root:{$rootId}"])
+            ->remember($cacheKey, 300, function () use ($page, $rootId, $pageNum, $perPage) {
+                $query = Comment::where('page_id', $page->id)
+                    ->where('root_id', $rootId)
+                    ->where('id', '!=', $rootId) // Exclude root comment
+                    ->with([
+                        'user:id,name,email,avatar',
+                        'parent.user:id,name', // Load parent user để hiển thị "Trả lời @username"
+                        'reactions' => fn ($q) => $q->where('user_id', auth()->id()),
+                    ])
+                    ->orderBy('created_at', 'asc'); // Đơn giản, chỉ sort theo thời gian
+
+                return $query->paginate($perPage, ['*'], 'page', $pageNum);
+            });
+
+        $replies = collect($result->items())
+            ->map(fn ($reply) => $this->transformComment($reply, collect()));
+
+        return response()->json([
+            'ok' => true,
+            'data' => $replies->values(),
+            'root_id' => $rootId,
+            'pagination' => [
+                'current_page' => $result->currentPage(),
+                'last_page' => $result->lastPage(),
+                'per_page' => $result->perPage(),
+                'total' => $result->total(),
+            ],
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
 
-        if (!$user) {
-            return response()->json([
-                'ok' => false,
-                'message' => 'Unauthorized',
-            ], 401);
+        if (! $user) {
+            return response()->json(['ok' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $request->validate([
+        $validate = $request->validate([
             'commentable_type' => 'required|in:Manga,MangaChapter',
             'commentable_id' => 'required|integer',
             'parent_id' => 'nullable|integer|exists:comments,id',
             'content' => 'required|string|min:1|max:5000',
         ]);
 
-        // Verify commentable exists and get/create page
-        if ($request->commentable_type === 'Manga') {
-            $commentable = Manga::findOrFail($request->commentable_id);
-        } else {
-            $commentable = MangaChapter::findOrFail($request->commentable_id);
-        }
+        $commentable = $request->commentable_type === 'Manga'
+            ? Manga::findOrFail($request->commentable_id)
+            : MangaChapter::findOrFail($request->commentable_id);
 
         $page = Page::getOrCreateFor($commentable);
 
-        // Calculate root_id and depth
+        $parent = null;
         $rootId = null;
         $depth = 0;
-        $parent = null;
 
         if ($request->parent_id) {
             $parent = Comment::findOrFail($request->parent_id);
-            // Root ID is the root of the parent, or parent itself if parent is root
+            // Root ID: nếu parent là root (root_id = null), thì rootId = parent.id
+            // Nếu parent là reply (có root_id), thì rootId = parent.root_id
             $rootId = $parent->root_id ?? $parent->id;
-            // Depth is parent's depth + 1
             $depth = ($parent->depth ?? 0) + 1;
         }
+        // Nếu không có parent_id, rootId vẫn là null (root comment)
 
         $comment = Comment::create([
             'user_id' => $user->id,
             'page_id' => $page->id,
             'parent_id' => $request->parent_id,
-            'root_id' => $rootId,
+            'root_id' => $rootId, // null cho root comments, id của root comment cho replies
             'depth' => $depth,
-            'content' => $request->content,
+            'content' => $validate['content'],
         ]);
 
-        // Increment parent's replies count
         if ($parent) {
             $parent->incrementRepliesCount();
         }
 
-        // Update page comments count
         $page->updateCommentsCount();
-        Cache::forget("comments:page:{$page->id}");
+
+        // Clear cache
+        Cache::tags(["comments:page:{$page->id}"])->flush();
+        if ($rootId) {
+            // rootId là id của root comment (parent là root)
+            Cache::tags(["comments:root:{$rootId}"])->flush();
+        } else {
+            // Nếu là root comment mới, clear cache của page
+            Cache::tags(["comments:page:{$page->id}"])->flush();
+        }
 
         $comment->load(['user:id,name,email,avatar']);
 
-        // Broadcast events
         event(new CommentCreated($comment));
         if ($parent) {
             event(new CommentReplied($comment, $parent));
@@ -199,12 +260,12 @@ class CommentController extends Controller
             ], 403);
         }
 
-        $request->validate([
+        $validate = $request->validate([
             'content' => 'required|string|min:1|max:5000',
         ]);
 
         $comment->update([
-            'content' => $request->content,
+            'content' => $validate['content'],
             'is_edited' => true,
         ]);
 
@@ -260,7 +321,7 @@ class CommentController extends Controller
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthorized',
@@ -362,6 +423,10 @@ class CommentController extends Controller
                 'email' => $comment->user->email,
                 'avatar' => $comment->user->avatar,
             ] : null,
+            'parent_user' => $comment->parent && $comment->parent->user ? [
+                'id' => $comment->parent->user->id,
+                'name' => $comment->parent->user->name,
+            ] : null, // Thông tin user của comment mà reply này đang reply
             'created_at' => $comment->created_at->toISOString(),
             'updated_at' => $comment->updated_at->toISOString(),
             'is_owner' => $user && $comment->user_id === $user->id,

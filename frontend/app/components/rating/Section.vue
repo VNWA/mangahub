@@ -9,15 +9,11 @@
           {{ averageRating.toFixed(1) }}
         </div>
         <div class="flex items-center justify-center gap-1 mt-1">
-          <UIcon
-            v-for="i in 5"
-            :key="i"
-            :name="i <= Math.round(averageRating) ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
-            :class="[
+          <UIcon v-for="i in 5" :key="i"
+            :name="i <= Math.round(averageRating) ? 'i-heroicons-star-solid' : 'i-heroicons-star'" :class="[
               'w-5 h-5',
               i <= Math.round(averageRating) ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'
-            ]"
-          />
+            ]" />
         </div>
         <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
           {{ totalRatings }} đánh giá
@@ -26,17 +22,11 @@
 
       <!-- Rating Distribution -->
       <div class="flex-1 space-y-2">
-        <div
-          v-for="star in 5"
-          :key="star"
-          class="flex items-center gap-2"
-        >
+        <div v-for="star in 5" :key="star" class="flex items-center gap-2">
           <span class="text-sm text-slate-600 dark:text-slate-400 w-8">{{ 6 - star }}⭐</span>
           <div class="flex-1 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-            <div
-              class="bg-yellow-400 h-2 rounded-full transition-all"
-              :style="{ width: `${getPercentage(6 - star)}%` }"
-            ></div>
+            <div class="bg-yellow-400 h-2 rounded-full transition-all"
+              :style="{ width: `${getPercentage(6 - star)}%` }"></div>
           </div>
           <span class="text-sm text-slate-600 dark:text-slate-400 w-8 text-right">
             {{ ratingDistribution[6 - star] || 0 }}
@@ -50,52 +40,27 @@
       <div class="flex items-center gap-2">
         <span class="text-sm font-semibold text-slate-900 dark:text-white">Đánh giá của bạn:</span>
         <div class="flex gap-1">
-          <button
-            v-for="i in 5"
-            :key="i"
-            @click="submitRating(i)"
-            :class="[
-              'transition-colors',
-              i <= (userRating?.rating || 0)
-                ? 'text-yellow-400'
-                : 'text-slate-300 dark:text-slate-600 hover:text-yellow-400'
-            ]"
-          >
-            <UIcon
-              :name="i <= (userRating?.rating || 0) ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
-              class="w-6 h-6"
-            />
+          <button v-for="i in 5" :key="i" @click="submitRating(i)" :class="[
+            'transition-colors cursor-pointer',
+            i <= currentDisplayRating
+              ? 'text-yellow-400'
+              : 'text-slate-300 dark:text-slate-600 hover:text-yellow-400'
+          ]">
+            <UIcon :name="i <= currentDisplayRating ? 'i-heroicons-star-solid' : 'i-heroicons-star'" class="w-6 h-6" />
           </button>
         </div>
-        <span v-if="userRating" class="text-sm text-slate-600 dark:text-slate-400">
-          ({{ userRating.rating }}/5)
+        <span v-if="currentDisplayRating > 0" class="text-sm text-slate-600 dark:text-slate-400">
+          ({{ currentDisplayRating }}/5)
         </span>
       </div>
 
       <div v-if="userRating || showReviewForm" class="space-y-2">
-        <UTextarea
-          v-model="reviewText"
-          placeholder="Viết đánh giá chi tiết (tùy chọn)..."
-          :rows="3"
-        />
+        <UTextarea v-model="reviewText" placeholder="Viết đánh giá chi tiết (tùy chọn)..." :rows="3" />
         <div class="flex gap-2">
-          <UButton
-            @click="submitReview"
-            color="primary"
-            size="sm"
-            :loading="submitting"
-            :disabled="!selectedRating"
-          >
+          <UButton @click="submitReview" color="primary" size="sm" :loading="submitting" :disabled="!selectedRating">
             {{ userRating ? 'Cập nhật' : 'Gửi đánh giá' }}
           </UButton>
-          <UButton
-            v-if="userRating"
-            @click="deleteRating"
-            variant="ghost"
-            color="red"
-            size="sm"
-            :loading="deleting"
-          >
+          <UButton v-if="userRating" @click="deleteRating" variant="ghost" color="error" size="sm" :loading="deleting">
             Xóa đánh giá
           </UButton>
         </div>
@@ -143,6 +108,13 @@ const showReviewForm = ref(false)
 const submitting = ref(false)
 const deleting = ref(false)
 
+// Computed: Hiển thị rating đang chọn hoặc rating đã có
+const currentDisplayRating = computed(() => {
+  // Nếu đang chọn sao mới (selectedRating > 0), hiển thị selectedRating
+  // Nếu không, hiển thị userRating nếu có
+  return selectedRating.value > 0 ? selectedRating.value : (userRating.value?.rating || 0)
+})
+
 // Load rating data
 const loadRating = async () => {
   try {
@@ -168,6 +140,11 @@ const loadRating = async () => {
       if (userRating.value) {
         selectedRating.value = userRating.value.rating
         reviewText.value = userRating.value.review || ''
+      } else {
+        // Reset nếu không có user rating
+        selectedRating.value = 0
+        reviewText.value = ''
+        showReviewForm.value = false
       }
     }
   } catch (error) {
@@ -217,6 +194,7 @@ const submitReview = async () => {
         color: 'success'
       })
       showReviewForm.value = false
+      // selectedRating sẽ được set lại từ userRating sau khi loadRating
     }
   } catch (error: any) {
     const errorData = error.data || error.response?._data

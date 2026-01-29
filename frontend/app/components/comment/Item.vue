@@ -9,9 +9,16 @@
       <div class="flex-1 min-w-0">
         <!-- Header -->
         <div class="flex items-start justify-between mb-2">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <!-- Hiển thị "Trả lời @username" nếu có parent_user -->
+
             <span class="font-semibold text-slate-900 dark:text-white">
               {{ comment.user?.name || 'Anonymous' }}
+            </span>
+            <span v-if="comment.parent_user"
+              class="text-xs text-slate-500 dark:text-slate-400 block border border-slate-200 dark:border-slate-700  px-2 rounded-md bg-slate-100 dark:bg-slate-700">
+              Trả lời
+              <span class="font-semibold text-primary">{{ comment.parent_user.name }}</span>
             </span>
             <UBadge v-if="comment.is_pinned" color="primary" variant="soft" size="xs">
               Ghim
@@ -26,19 +33,20 @@
         </div>
 
         <!-- Content -->
-        <div class="text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap break-words">
+        <div class="text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap wrap-break-word">
           {{ comment.content }}
         </div>
 
         <!-- Actions -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 flex-wrap">
           <!-- Like -->
-          <button @click="$emit('react', comment.id, 'like')" :class="[
+          <button @click="handleReact('like')" :disabled="!auth.logged" :class="[
             'flex items-center gap-1 text-sm transition-colors',
             comment.user_reaction === 'like'
               ? 'text-blue-600 dark:text-blue-400 font-semibold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400'
-          ]">
+              : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400',
+            !auth.logged && 'opacity-50 cursor-not-allowed'
+          ]" :title="!auth.logged ? 'Đăng nhập để thích' : ''">
             <UIcon
               :name="comment.user_reaction === 'like' ? 'i-heroicons-hand-thumb-up-solid' : 'i-heroicons-hand-thumb-up'"
               class="w-4 h-4" />
@@ -46,12 +54,13 @@
           </button>
 
           <!-- Dislike -->
-          <button @click="$emit('react', comment.id, 'dislike')" :class="[
+          <button @click="handleReact('dislike')" :disabled="!auth.logged" :class="[
             'flex items-center gap-1 text-sm transition-colors',
             comment.user_reaction === 'dislike'
               ? 'text-red-600 dark:text-red-400 font-semibold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400'
-          ]">
+              : 'text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400',
+            !auth.logged && 'opacity-50 cursor-not-allowed'
+          ]" :title="!auth.logged ? 'Đăng nhập để không thích' : ''">
             <UIcon
               :name="comment.user_reaction === 'dislike' ? 'i-heroicons-hand-thumb-down-solid' : 'i-heroicons-hand-thumb-down'"
               class="w-4 h-4" />
@@ -59,8 +68,11 @@
           </button>
 
           <!-- Reply -->
-          <button @click="showReplyForm = !showReplyForm"
-            class="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+          <button @click="handleReplyClick" :disabled="!auth.logged" :class="[
+            'flex items-center gap-1 text-sm transition-colors',
+            'text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400',
+            !auth.logged && 'opacity-50 cursor-not-allowed'
+          ]" :title="!auth.logged ? 'Đăng nhập để phản hồi' : ''">
             <UIcon name="i-heroicons-arrow-turn-down-left" class="w-4 h-4" />
             <span>Phản hồi</span>
             <span v-if="comment.replies_count > 0" class="text-xs">
@@ -69,14 +81,18 @@
           </button>
 
           <!-- Edit/Delete (Owner only) -->
-          <template v-if="comment.is_owner">
+          <template v-if="comment.is_owner && auth.logged">
             <button @click="showEditForm = !showEditForm"
-              class="text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-              Sửa
+              class="text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              title="Chỉnh sửa bình luận">
+              <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
+              <span class="ml-1">Sửa</span>
             </button>
             <button @click="confirmDelete"
-              class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors">
-              Xóa
+              class="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors flex items-center gap-1"
+              title="Xóa bình luận">
+              <UIcon name="i-heroicons-trash" class="w-4 h-4" />
+              <span>Xóa</span>
             </button>
           </template>
         </div>
@@ -117,7 +133,7 @@
           </div>
         </div>
 
-        <!-- Replies -->
+        <!-- Replies (nested) -->
         <div v-if="comment.replies && comment.replies.length > 0" :class="[
           'mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-3',
           comment.depth > 0 ? 'ml-4 pl-4 border-l-2 border-slate-200 dark:border-slate-700' : ''
@@ -125,16 +141,7 @@
           <CommentItem v-for="reply in comment.replies" :key="reply.id" :comment="reply"
             :commentable-type="commentableType" :commentable-id="commentableId" :is-reply="true"
             @reply="(id, content) => $emit('reply', id, content)" @edit="(id, content) => $emit('edit', id, content)"
-            @delete="(id) => $emit('delete', id)" @react="(id, type) => $emit('react', id, type)"
-            @loadReplies="(id) => $emit('loadReplies', id)" />
-        </div>
-
-        <!-- Load Replies Button -->
-        <div v-else-if="comment.replies_count > 0 && !comment.replies"
-          class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-          <UButton @click="handleLoadReplies" variant="ghost" color="primary" size="sm" :loading="loadingReplies">
-            Xem {{ comment.replies_count }} phản hồi
-          </UButton>
+            @delete="(id) => $emit('delete', id)" @react="(id, type) => $emit('react', id, type)" />
         </div>
       </div>
     </div>
@@ -160,6 +167,10 @@ interface Comment {
     email: string
     avatar: string | null
   } | null
+  parent_user?: {
+    id: number
+    name: string
+  } | null
   replies?: Comment[]
   created_at: string
   updated_at: string
@@ -182,7 +193,6 @@ const emit = defineEmits<{
   edit: [commentId: number, content: string]
   delete: [commentId: number]
   react: [commentId: number, type: 'like' | 'dislike']
-  loadReplies: [commentId: number]
 }>()
 
 const auth = useAuthStore()
@@ -191,7 +201,6 @@ const showReplyForm = ref(false)
 const showEditForm = ref(false)
 const replyContent = ref('')
 const editContent = ref(props.comment.content)
-const loadingReplies = ref(false)
 
 const formatTime = (dateString: string) => {
   const date = new Date(dateString)
@@ -215,6 +224,30 @@ const formatTime = (dateString: string) => {
   }
 }
 
+const handleReact = (type: 'like' | 'dislike') => {
+  if (!auth.logged) {
+    toast.add({
+      title: 'Thông báo',
+      description: 'Vui lòng đăng nhập để thích/không thích bình luận',
+      color: 'warning'
+    })
+    return
+  }
+  emit('react', props.comment.id, type)
+}
+
+const handleReplyClick = () => {
+  if (!auth.logged) {
+    toast.add({
+      title: 'Thông báo',
+      description: 'Vui lòng đăng nhập để phản hồi',
+      color: 'warning'
+    })
+    return
+  }
+  showReplyForm.value = !showReplyForm.value
+}
+
 const submitReply = () => {
   if (!replyContent.value.trim()) return
   emit('reply', props.comment.id, replyContent.value.trim())
@@ -234,13 +267,4 @@ const confirmDelete = () => {
   }
 }
 
-const handleLoadReplies = async () => {
-  if (loadingReplies.value || props.comment.replies) return
-
-  loadingReplies.value = true
-  emit('loadReplies', props.comment.id)
-  // Wait a bit for the parent to load replies
-  await new Promise(resolve => setTimeout(resolve, 500))
-  loadingReplies.value = false
-}
 </script>

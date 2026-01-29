@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Manga;
-use App\Models\MangaCategory;
+use App\Models\Page;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -229,15 +229,12 @@ class MangaController extends Controller
      */
     public function transformManga(Manga $manga): array
     {
-        $storageUrl = config('app.storage_url') ?: (config('app.url').'/storage');
-        // Remove double slashes
-        $storageUrl = rtrim($storageUrl, '/');
 
         return [
             'id' => $manga->id,
             'name' => $manga->name,
             'slug' => $manga->slug,
-            'avatar' => $manga->avatar ? ($config.'/'.$manga->avatar) : null,
+            'avatar' => $manga->avatar || '',
             'description' => $manga->description,
             'status' => $manga->status,
             'views' => $manga->total_views,
@@ -275,6 +272,8 @@ class MangaController extends Controller
             'order' => $chapter->order,
             'created_at' => $chapter->created_at?->toISOString(),
         ]);
+        $page = Page::getOrCreateFor($manga);
+        $data['comment_count'] = $page->comments_count ?? 0;
 
         return $data;
     }

@@ -25,10 +25,11 @@ Route::prefix('v1')->group(function () {
         // Ensure user is authenticated via Sanctum
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             \Log::warning('Broadcasting auth: No user found', [
                 'has_bearer_token' => $request->bearerToken() !== null,
             ]);
+
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthenticated',
@@ -71,11 +72,10 @@ Route::prefix('v1')->group(function () {
 
             return response()->json([
                 'ok' => false,
-                'message' => 'Authorization failed: ' . $e->getMessage(),
+                'message' => 'Authorization failed: '.$e->getMessage(),
             ], 403);
         }
     })->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, 'auth:sanctum')->name('broadcasting.auth');
-
 
     // Authentication routes
     Route::post('login', [AuthController::class, 'login'])->name('login');
@@ -129,6 +129,7 @@ Route::prefix('v1')->group(function () {
     // Rating routes
     Route::prefix('mangas/{mangaId}/rating')->group(function () {
         Route::get('/', [RatingController::class, 'show'])->name('ratings.show');
+        Route::get('/list', [RatingController::class, 'index'])->name('ratings.index');
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/', [RatingController::class, 'store'])->name('ratings.store');
             Route::delete('/', [RatingController::class, 'destroy'])->name('ratings.destroy');
