@@ -11,37 +11,36 @@ export const useNotifications = () => {
     const echo = useEcho()
     if (!echo || !auth.logged || !auth.user?.id) return
 
-    console.log('🔔 Listening for notifications on channel:', `user.${auth.user.id}`)
 
     // Listen for user-specific notifications (private channel)
     echo.private(`user.${auth.user.id}`)
       .notification((notification: any) => {
-        console.log('📬 Received notification:', notification)
         handleNotification(notification)
       })
   }
 
   const handleNotification = (notification: any) => {
-    const { type, message, data } = notification
+    const { type, message, title, data } = notification
 
-    toast.add({
-      title: 'Thông báo',
+    const toastId = toast.add({
+      title: title || 'Thông báo',
       description: message,
       color: 'info',
       icon: 'i-heroicons-bell'
     })
 
+    // Handle navigation on toast click (if supported)
+    // Navigation will be handled via NotificationDropdown when user clicks notification
+
     // Handle specific notification types
     switch (type) {
       case 'comment_reply':
-        // Could navigate to comment or show in notification center
+        // Notification will be added to dropdown via Echo listener
+        console.log('Comment reply notification:', data)
         break
       case 'new_chapter':
-        // Could navigate to chapter or show in notification center
-        if (data?.chapter) {
-          // Store notification for later viewing
-          console.log('New chapter:', data.chapter)
-        }
+        // Notification will be added to dropdown via Echo listener
+        console.log('New chapter notification:', data)
         break
     }
   }

@@ -153,7 +153,7 @@ const loadRanking = async () => {
                 status: string
                 lastChapter?: string
             }>
-        }>('/api/v1/mangas/top', {
+        }>('/mangas/top', {
             query: {
                 type,
                 limit: 50,

@@ -1,34 +1,21 @@
 <template>
-  <UPopover :popper="{ placement: 'bottom-end' }">
-    <UButton
-      variant="ghost"
-      color="neutral"
-      square
-      size="sm"
-      class="relative"
-      :class="{ 'ring-2 ring-purple-500 dark:ring-purple-400': hasUnread }"
-    >
+  <UPopover v-model:open="isOpen" :popper="{ placement: 'bottom-end' }">
+    <UButton variant="ghost" color="neutral" square size="sm" class="relative"
+      :class="{ 'ring-2 ring-purple-500 dark:ring-purple-400': hasUnread }">
       <UIcon name="i-heroicons-bell" class="w-5 h-5" />
-      <span
-        v-if="unreadCount > 0"
-        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
-      >
+      <span v-if="unreadCount > 0"
+        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
         {{ unreadCount > 9 ? '9+' : unreadCount }}
       </span>
     </UButton>
 
-    <template #panel>
+    <template #content>
       <div class="w-80 max-h-96 overflow-y-auto">
         <!-- Header -->
         <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <h3 class="font-semibold text-slate-900 dark:text-white">Thông báo</h3>
-          <UButton
-            v-if="notifications.length > 0"
-            variant="ghost"
-            size="xs"
-            @click="markAllAsRead"
-            :disabled="unreadCount === 0"
-          >
+          <UButton v-if="notifications.length > 0" variant="ghost" size="xs" @click="markAllAsRead"
+            :disabled="unreadCount === 0">
             Đánh dấu đã đọc
           </UButton>
         </div>
@@ -46,23 +33,17 @@
         </div>
 
         <div v-else class="divide-y divide-slate-200 dark:divide-slate-700">
-          <button
-            v-for="notification in notifications"
-            :key="notification.id"
-            @click="handleNotificationClick(notification)"
-            :class="[
+          <button v-for="notification in notifications" :key="notification.id"
+            @click="handleNotificationClick(notification)" :class="[
               'w-full p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors',
               !notification.read_at && 'bg-blue-50/50 dark:bg-blue-900/20'
-            ]"
-          >
+            ]">
             <div class="flex gap-3">
-              <div class="flex-shrink-0">
-                <div
-                  :class="[
-                    'w-2 h-2 rounded-full mt-2',
-                    !notification.read_at ? 'bg-blue-500' : 'bg-transparent'
-                  ]"
-                />
+              <div class="shrink-0">
+                <div :class="[
+                  'w-2 h-2 rounded-full mt-2',
+                  !notification.read_at ? 'bg-blue-500' : 'bg-transparent'
+                ]" />
               </div>
               <div class="flex-1 min-w-0">
                 <p class="text-sm font-medium text-slate-900 dark:text-white mb-1">
@@ -81,12 +62,7 @@
 
         <!-- Footer -->
         <div v-if="notifications.length > 0" class="p-3 border-t border-slate-200 dark:border-slate-700">
-          <UButton
-            variant="ghost"
-            color="primary"
-            block
-            @click="viewAllNotifications"
-          >
+          <UButton variant="ghost" color="primary" block @click="viewAllNotifications">
             Xem tất cả
           </UButton>
         </div>
@@ -111,6 +87,7 @@ interface Notification {
 
 const notifications = ref<Notification[]>([])
 const loading = ref(false)
+const isOpen = ref(false)
 const unreadCount = computed(() => notifications.value.filter(n => !n.read_at).length)
 const hasUnread = computed(() => unreadCount.value > 0)
 
@@ -120,10 +97,27 @@ const loadNotifications = async () => {
 
   try {
     loading.value = true
-    // TODO: Replace with actual API call when backend is ready
-    // For now, we'll use real-time notifications from Echo
-    // const data = await $http('/api/v1/notifications')
-    // notifications.value = data.data || []
+    const data = await $http<{
+      ok: boolean
+      data: Notification[]
+      unread_count: number
+    }>('/notifications', {
+      query: {
+        per_page: 20,
+      },
+    })
+
+    if (data?.ok && data.data) {
+      notifications.value = data.data.map((n: any) => ({
+        id: n.id,
+        type: n.type,
+        title: n.title || 'Thông báo',
+        message: n.message || '',
+        data: n.data || {},
+        read_at: n.read_at,
+        created_at: n.created_at,
+      }))
+    }
   } catch (error) {
     console.error('Failed to load notifications:', error)
   } finally {
@@ -131,13 +125,21 @@ const loadNotifications = async () => {
   }
 }
 
+// Watch for popover open
+watch(isOpen, (open) => {
+  if (open && auth.logged) {
+    loadNotifications()
+  }
+})
+
 // Mark all as read
 const markAllAsRead = async () => {
   if (unreadCount.value === 0) return
 
   try {
-    // TODO: Replace with actual API call
-    // await $http.post('/api/v1/notifications/mark-all-read')
+    await $http('/notifications/mark-all-read', {
+      method: 'POST',
+    })
     notifications.value = notifications.value.map(n => ({ ...n, read_at: new Date().toISOString() }))
   } catch (error) {
     console.error('Failed to mark all as read:', error)
@@ -149,8 +151,9 @@ const handleNotificationClick = async (notification: Notification) => {
   // Mark as read
   if (!notification.read_at) {
     try {
-      // TODO: Replace with actual API call
-      // await $http.post(`/api/v1/notifications/${notification.id}/read`)
+      await $http(`/notifications/${notification.id}/read`, {
+        method: 'POST',
+      })
       notification.read_at = new Date().toISOString()
     } catch (error) {
       console.error('Failed to mark notification as read:', error)
@@ -158,10 +161,58 @@ const handleNotificationClick = async (notification: Notification) => {
   }
 
   // Navigate based on type
-  if (notification.type === 'new_chapter' && notification.data?.manga_slug && notification.data?.chapter_slug) {
-    router.push(`/${notification.data.manga_slug}/${notification.data.chapter_slug}`)
+  if (notification.type === 'new_chapter') {
+    const mangaSlug = notification.data?.manga_slug || notification.data?.manga?.slug
+    const chapterSlug = notification.data?.chapter_slug || notification.data?.chapter?.slug
+    if (mangaSlug && chapterSlug) {
+      router.push(`/${mangaSlug}/${chapterSlug}`)
+    } else if (mangaSlug) {
+      router.push(`/${mangaSlug}`)
+    }
   } else if (notification.type === 'comment_reply' && notification.data?.manga_slug) {
-    router.push(`/${notification.data.manga_slug}#comments`)
+    // Navigate to manga page with comment ID in hash for scrolling
+    const commentId = notification.data.comment_id || notification.data.reply?.id
+    const route = `/${notification.data.manga_slug}${commentId ? `#comment-${commentId}` : '#comments'}`
+
+    // Navigate first
+    router.push(route).then(() => {
+      // Wait for page to load, then handle scrolling
+      nextTick(() => {
+        // First, ensure comments tab is active
+        const commentsTab = document.querySelector('[data-tab="comments"]')
+        if (commentsTab) {
+          (commentsTab as HTMLElement).click()
+        }
+
+        // Then scroll to comment or comments section
+        setTimeout(() => {
+          if (commentId) {
+            // Try to scroll to the specific comment
+            const element = document.getElementById(`comment-${commentId}`)
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              // Highlight the comment briefly
+              element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2', 'rounded-lg')
+              setTimeout(() => {
+                element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
+              }, 2000)
+            } else {
+              // Fallback: scroll to comments section
+              const commentsSection = document.getElementById('comments-section')
+              if (commentsSection) {
+                commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }
+          } else {
+            // Scroll to comments section
+            const commentsSection = document.getElementById('comments-section')
+            if (commentsSection) {
+              commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }
+          }
+        }, 800) // Wait a bit longer for tab to switch
+      })
+    })
   }
 }
 
@@ -203,16 +254,19 @@ onMounted(() => {
     const echo = useEcho()
     if (echo && auth.user?.id) {
       notificationHandler = (notification: any) => {
-        // Add to top of list
-        notifications.value.unshift({
-          id: notification.id || Date.now(),
-          type: notification.type,
-          title: notification.title,
-          message: notification.message,
-          data: notification.data,
-          read_at: null,
-          created_at: new Date().toISOString(),
-        })
+        // Add to top of list if not already exists
+        const existingIndex = notifications.value.findIndex(n => n.id === notification.id)
+        if (existingIndex === -1) {
+          notifications.value.unshift({
+            id: notification.id || `echo-${Date.now()}`,
+            type: notification.type,
+            title: notification.title || 'Thông báo',
+            message: notification.message || '',
+            data: notification.data || {},
+            read_at: null,
+            created_at: new Date().toISOString(),
+          })
+        }
       }
 
       echo.private(`user.${auth.user.id}`).notification(notificationHandler)

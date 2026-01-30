@@ -130,9 +130,9 @@
         <div class="pt-8 border-t border-slate-200 dark:border-slate-700">
           <h2 class="text-2xl font-bold mb-6">Bình luận chương</h2>
           <CommentSection
-            v-if="chapterData"
+            v-if="chapterData?.data?.id"
             :commentable-type="'MangaChapter'"
-            :commentable-id="chapterData.id"
+            :commentable-id="chapterData.data.id"
           />
         </div>
       </div>

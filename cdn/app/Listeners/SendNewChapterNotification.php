@@ -14,8 +14,14 @@ class SendNewChapterNotification implements ShouldQueue
 
     public function handle(ChapterCreated $event): void
     {
+        // Ensure chapter has manga relationship loaded
+        $event->chapter->loadMissing('manga');
         $manga = $event->chapter->manga;
-        
+
+        if (! $manga) {
+            return;
+        }
+
         // Get all users who favorited this manga
         $favoriteUserIds = Favorite::where('manga_id', $manga->id)
             ->pluck('user_id')

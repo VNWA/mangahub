@@ -215,7 +215,7 @@ const handleSearchInput = async () => {
           author: string
           coverImage: string | null
         }>
-      }>('/api/v1/search', {
+      }>('/search', {
         query: {
           q: query,
           per_page: 5,

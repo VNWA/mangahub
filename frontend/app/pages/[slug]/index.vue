@@ -126,7 +126,7 @@
                                         ({{ story.totalRatings || 0 }})
                                     </span>
                                 </button>
-                                <button @click="activeTab = 'comments'" :class="[
+                                <button @click="activeTab = 'comments'" data-tab="comments" :class="[
                                     'py-3 px-2 font-semibold text-sm border-b-2 transition-colors',
                                     activeTab === 'comments'
                                         ? 'border-primary text-primary'
@@ -146,7 +146,7 @@
                         <div v-else-if="activeTab === 'rating'">
                             <RatingList v-if="mangaId > 0" :manga-id="mangaId" />
                         </div>
-                        <div v-else-if="activeTab === 'comments'">
+                        <div v-else-if="activeTab === 'comments'" id="comments-section">
                             <CommentSection :commentable-type="'Manga'" :commentable-id="mangaId" />
                         </div>
 
@@ -250,6 +250,40 @@ const chapters = computed(() => story.value?.chapters || [])
 const activeTab = ref<'chapters' | 'rating' | 'comments'>('chapters')
 const descriptionExpanded = ref(false)
 const relatedStories = ref<any[]>([])
+
+// Handle hash navigation (e.g., from notification)
+onMounted(() => {
+  if (import.meta.client) {
+    const hash = window.location.hash
+    if (hash.startsWith('#comment-')) {
+      activeTab.value = 'comments'
+      // Scroll to comment after a delay to ensure it's loaded
+      nextTick(() => {
+        setTimeout(() => {
+          const commentId = hash.replace('#comment-', '')
+          const element = document.getElementById(`comment-${commentId}`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2', 'rounded-lg')
+            setTimeout(() => {
+              element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
+            }, 2000)
+          }
+        }, 500)
+      })
+    } else if (hash === '#comments') {
+      activeTab.value = 'comments'
+      nextTick(() => {
+        setTimeout(() => {
+          const commentsSection = document.getElementById('comments-section')
+          if (commentsSection) {
+            commentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }, 500)
+      })
+    }
+  }
+})
 
 const formatNumber = (num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'

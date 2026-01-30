@@ -144,6 +144,12 @@ const pageId = ref<number | null>(null)
 
 // Load comments (threads) - 10 root comments mỗi lần
 const loadComments = async (page = 1, append = false) => {
+  // Don't load if commentableId is not valid
+  if (!props.commentableId || props.commentableId <= 0) {
+    loading.value = false
+    return
+  }
+
   try {
     if (page === 1) {
       loading.value = true
@@ -274,7 +280,7 @@ const loadThreadReplies = async (rootId: number) => {
 
 // Submit comment
 const submitComment = async () => {
-  if (!newComment.value.trim() || !auth.logged) return
+  if (!newComment.value.trim() || !auth.logged || !props.commentableId || props.commentableId <= 0) return
 
   submitting.value = true
   try {
@@ -315,6 +321,8 @@ const cancelComment = () => {
 
 // Handle reply
 const handleReply = async (parentId: number, content: string) => {
+  if (!props.commentableId || props.commentableId <= 0) return
+
   try {
     const data = await $http<{
       ok: boolean
@@ -524,7 +532,9 @@ const loadMore = () => {
 let echoChannel: any = null
 
 onMounted(() => {
-  loadComments()
+  if (props.commentableId && props.commentableId > 0) {
+    loadComments()
+  }
 
   // Setup realtime only on client-side
   if (typeof window !== 'undefined') {
@@ -608,7 +618,14 @@ onMounted(() => {
 
 // Watch for auth changes
 watch(() => auth.logged, () => {
-  if (auth.logged) {
+  if (auth.logged && props.commentableId && props.commentableId > 0) {
+    loadComments()
+  }
+})
+
+// Watch for commentableId changes (e.g., when chapter data loads)
+watch(() => props.commentableId, (newId) => {
+  if (newId && newId > 0 && threads.value.length === 0) {
     loadComments()
   }
 })

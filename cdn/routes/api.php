@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\ChapterController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MangaController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\ReadingHistoryController;
 use App\Http\Controllers\Api\SearchController;
@@ -26,9 +27,7 @@ Route::prefix('v1')->group(function () {
         $user = $request->user();
 
         if (! $user) {
-            \Log::warning('Broadcasting auth: No user found', [
-                'has_bearer_token' => $request->bearerToken() !== null,
-            ]);
+
 
             return response()->json([
                 'ok' => false,
@@ -39,11 +38,7 @@ Route::prefix('v1')->group(function () {
         $channelName = $request->input('channel_name');
         $socketId = $request->input('socket_id');
 
-        \Log::info('Broadcasting auth: User authenticated', [
-            'user_id' => $user->id,
-            'channel_name' => $channelName,
-            'socket_id' => $socketId,
-        ]);
+
 
         // Set the authenticated user for channel authorization
         // This is critical: Broadcast::auth() needs the user to be set in the auth context
@@ -56,19 +51,10 @@ Route::prefix('v1')->group(function () {
             // The user should now be available in the callbacks
             $response = Broadcast::auth($request);
 
-            \Log::info('Broadcasting auth: Success', [
-                'user_id' => $user->id,
-                'channel_name' => $channelName,
-            ]);
 
             return $response;
         } catch (\Exception $e) {
-            \Log::error('Broadcasting auth: Error', [
-                'user_id' => $user->id,
-                'channel_name' => $channelName,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+
 
             return response()->json([
                 'ok' => false,
@@ -155,6 +141,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/', [ReadingHistoryController::class, 'index'])->name('reading-history.index');
             Route::post('/', [ReadingHistoryController::class, 'store'])->name('reading-history.store');
             Route::delete('/', [ReadingHistoryController::class, 'destroy'])->name('reading-history.destroy');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
         });
     });
 });

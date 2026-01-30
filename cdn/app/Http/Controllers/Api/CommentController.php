@@ -232,10 +232,12 @@ class CommentController extends Controller
             Cache::tags(["comments:page:{$page->id}"])->flush();
         }
 
-        $comment->load(['user:id,name,email,avatar']);
+        $comment->load(['user:id,name,email,avatar', 'page.pageable']);
 
         event(new CommentCreated($comment));
         if ($parent) {
+            // Ensure parent has relationships loaded
+            $parent->loadMissing(['user', 'page.pageable']);
             event(new CommentReplied($comment, $parent));
         }
 
