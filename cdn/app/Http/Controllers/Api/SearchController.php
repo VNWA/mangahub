@@ -47,9 +47,15 @@ class SearchController extends Controller
             ->paginate($perPage);
 
         // Transform data
-        $mangaController = new \App\Http\Controllers\Api\MangaController();
+        $mangaController = new \App\Http\Controllers\Api\MangaController;
         $mangas->getCollection()->transform(function ($manga) use ($mangaController) {
-            return $mangaController->transformManga($manga);
+            $transformed = $mangaController->transformManga($manga);
+            // Ensure title field exists for frontend
+            if (! isset($transformed['title']) && isset($transformed['name'])) {
+                $transformed['title'] = $transformed['name'];
+            }
+
+            return $transformed;
         });
 
         return response()->json([

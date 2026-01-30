@@ -24,8 +24,23 @@
                     </div>
                 </div>
 
+                <!-- Loading State -->
+                <div v-if="loading" class="space-y-3">
+                    <div v-for="i in 5" :key="i" class="animate-pulse">
+                        <div class="flex items-start gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div class="w-14 h-14 bg-slate-200 dark:bg-slate-700 rounded-xl"></div>
+                            <div class="w-20 h-32 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+                            <div class="flex-1 space-y-2">
+                                <div class="h-6 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div>
+                                <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
+                                <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Ranking List -->
-                <div class="space-y-3">
+                <div v-else-if="currentRankedStories.length > 0" class="space-y-3">
                     <div v-for="(story, index) in currentRankedStories" :key="story.id"
                         class="flex items-start gap-4 p-4 bg-white dark:bg-slate-800 rounded-xl hover:shadow-lg transition-all border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-700">
                         <!-- Rank Badge -->
@@ -90,6 +105,12 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Empty State -->
+                <div v-else class="text-center py-12">
+                    <UIcon name="i-heroicons-trophy" class="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                    <p class="text-slate-600 dark:text-slate-400">Chưa có dữ liệu xếp hạng</p>
+                </div>
             </div>
         </main>
     </div>
@@ -102,89 +123,70 @@ definePageMeta({
 
 const activeTabIndex = ref(0)
 const tabs = [
-    { label: 'Top Tuần', icon: 'i-heroicons-calendar-days', value: 'week' },
-    { label: 'Top Tháng', icon: 'i-heroicons-calendar', value: 'month' },
+    { label: 'Top Tuần', icon: 'i-heroicons-calendar-days', value: 'weekly' },
+    { label: 'Top Tháng', icon: 'i-heroicons-calendar', value: 'monthly' },
     { label: 'Top Năm', icon: 'i-heroicons-star', value: 'year' },
     { label: 'Top All', icon: 'i-heroicons-trophy', value: 'all' }
 ]
 
-const weekStories = ref([
-    {
-        id: '1',
-        title: 'One Piece',
-        slug: 'one-piece',
-        author: 'Eiichiro Oda',
-        coverImage: 'https://images.unsplash.com/photo-1621038149384-90c0f91bb3f4?w=400&h=600&fit=crop',
-        description: 'Cuộc phiêu lưu của Monkey D. Luffy và đội hải tặc của anh ta',
-        rating: 9.0,
-        views: 5000000,
-        status: 'Đang ra',
-    },
-    {
-        id: '2',
-        title: 'My Hero Academia',
-        slug: 'my-hero-academia',
-        author: 'Kohei Horikoshi',
-        coverImage: 'https://images.unsplash.com/photo-1623956299424-58e5a4e3f4c7?w=400&h=600&fit=crop',
-        description: 'Nước này người có siêu năng lực, Deku là ngoại lệ duy nhất',
-        rating: 8.7,
-        views: 3500000,
-        status: 'Đang ra',
-    },
-    {
-        id: '3',
-        title: 'Attack on Titan',
-        slug: 'attack-on-titan',
-        author: 'Hajime Isayama',
-        coverImage: 'https://images.unsplash.com/photo-1634447288519-eec6d71f7ab3?w=400&h=600&fit=crop',
-        description: 'Thế giới bị tấn công bởi những con quái vật khổng lồ',
-        rating: 9.1,
-        views: 4500000,
-        status: 'Hoàn thành',
-    },
-    {
-        id: '4',
-        title: 'Jujutsu Kaisen',
-        slug: 'jujutsu-kaisen',
-        author: 'Gege Akutami',
-        coverImage: 'https://images.unsplash.com/photo-1621038149384-90c0f91bb3f4?w=400&h=600&fit=crop',
-        description: 'Yuji nuốt một ngón tay của quỷ vương và trở thành một kỳ sinh',
-        rating: 8.8,
-        views: 3800000,
-        status: 'Đang ra',
-    },
-    {
-        id: '5',
-        title: 'Demon Slayer',
-        slug: 'demon-slayer',
-        author: 'Koyoharu Gotouge',
-        coverImage: 'https://images.unsplash.com/photo-1634447288519-eec6d71f7ab3?w=400&h=600&fit=crop',
-        description: 'Tanjiro truy đuổi quỷ để cứu em gái bị biến thành quỷ',
-        rating: 8.8,
-        views: 3800000,
-        status: 'Hoàn thành',
-        lastChapter: 'Chapter 205',
-    },
-])
+const rankedStories = ref<any[]>([])
+const loading = ref(false)
 
-const monthStories = ref([...weekStories.value].reverse())
-const yearStories = ref([...weekStories.value])
-const allStories = ref([...weekStories.value])
+// Load ranking data
+const loadRanking = async () => {
+    const tabValue = tabs[activeTabIndex.value]?.value || 'all'
+    loading.value = true
 
-const currentRankedStories = computed(() => {
-    const tabValue = tabs[activeTabIndex.value]?.value
-    switch (tabValue) {
-        case 'week':
-            return weekStories.value
-        case 'month':
-            return monthStories.value
-        case 'year':
-            return yearStories.value
-        case 'all':
-            return allStories.value
-        default:
-            return weekStories.value
+    try {
+        const type = tabValue === 'year' ? 'all' : tabValue
+        const data = await $http<{
+            ok: boolean
+            data: Array<{
+                id: number
+                title: string
+                slug: string
+                author: string
+                coverImage: string | null
+                description: string
+                rating: number
+                views: number
+                status: string
+                lastChapter?: string
+            }>
+        }>('/api/v1/mangas/top', {
+            query: {
+                type,
+                limit: 50,
+            },
+        })
+
+        if (data?.ok && data.data) {
+            rankedStories.value = data.data.map((item: any) => ({
+                id: item.id,
+                title: item.title || item.name,
+                slug: item.slug,
+                author: item.author?.name || item.author || 'Unknown',
+                coverImage: item.coverImage || item.avatar,
+                description: item.description || '',
+                rating: item.rating || 0,
+                views: item.views || item.total_views || 0,
+                status: item.status || 'Đang ra',
+                lastChapter: item.lastChapter || item.chapters?.[item.chapters.length - 1]?.name || 'Chưa có',
+            }))
+        }
+    } catch (error) {
+        console.error('Failed to load ranking:', error)
+        rankedStories.value = []
+    } finally {
+        loading.value = false
     }
+}
+
+const currentRankedStories = computed(() => rankedStories.value)
+
+// Watch for tab changes
+watch(activeTabIndex, () => {
+    loadRanking()
 })
 
 const formatNumber = (num: number) => {
@@ -194,9 +196,14 @@ const formatNumber = (num: number) => {
 }
 
 const getLastChapterNumber = (lastChapter: string) => {
+    if (!lastChapter || lastChapter === 'Chưa có') return '1'
     const match = lastChapter.match(/\d+/)
     return match ? match[0] : '1'
 }
+
+onMounted(() => {
+    loadRanking()
+})
 
 useHead({
     title: 'Bảng xếp hạng - WebTruyen'
