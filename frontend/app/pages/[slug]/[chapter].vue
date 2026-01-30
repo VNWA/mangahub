@@ -74,8 +74,37 @@
           </div>
         </div>
 
+        <!-- Locked Chapter Notice -->
+        <div v-if="chapterData?.data?.is_locked && !chapterData?.data?.is_accessible" class="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div class="flex items-start gap-4">
+            <UIcon name="i-heroicons-lock-closed" class="w-6 h-6 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+            <div class="flex-1">
+              <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Chapter này đã bị khóa</h3>
+              <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-4">
+                Bạn cần {{ formatCoin(chapterData.data.coin_cost) }} coin để mở khóa chapter này.
+              </p>
+              <UButton
+                v-if="auth.logged"
+                @click="handleUnlockChapter"
+                :loading="unlocking"
+                :disabled="userCoin < (chapterData.data.coin_cost || 0)"
+                color="yellow"
+                size="sm"
+              >
+                <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4" />
+                Mở khóa với {{ formatCoin(chapterData.data.coin_cost || 0) }} coin
+              </UButton>
+              <div v-else class="flex items-center gap-2">
+                <UButton to="/auth/login" color="primary" size="sm">
+                  Đăng nhập để mở khóa
+                </UButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Chapter Content -->
-        <article :style="{ lineHeight: `${lineHeight}` }" class="prose dark:prose-invert max-w-none mb-12">
+        <article v-if="chapterData?.data?.is_accessible" :style="{ lineHeight: `${lineHeight}` }" class="prose dark:prose-invert max-w-none mb-12">
           <div v-if="chapterData?.content?.images" class="space-y-4">
             <img
               v-for="(image, index) in chapterData.content.images"
@@ -183,6 +212,15 @@ const route = useRoute()
 const storySlug = route.params.slug as string
 const chapterSlug = route.params.chapter as string
 const { addHistory } = useReadingHistory()
+const auth = useAuthStore()
+const toast = useToast()
+const unlocking = ref(false)
+
+const userCoin = computed(() => auth.user?.coin ?? 0)
+
+const formatCoin = (coin: number) => {
+  return new Intl.NumberFormat('vi-VN').format(coin)
+}
 
 // Reading Settings
 const fontSize = ref(16)
@@ -191,7 +229,7 @@ const bgColor = ref('#ffffff')
 const isDarkMode = ref(false)
 
 // Load chapter data
-const { data: chapterData, pending: chapterPending } = useLazyHttp<{
+const { data: chapterData, pending: chapterPending, refresh: refreshChapter } = useLazyHttp<{
   ok: boolean
   data: {
     id: number
@@ -199,6 +237,10 @@ const { data: chapterData, pending: chapterPending } = useLazyHttp<{
     slug: string
     order: number
     description: string | null
+    coin_cost: number
+    is_locked: boolean
+    is_unlocked: boolean
+    is_accessible: boolean
     manga: {
       id: number
       name: string
@@ -335,6 +377,56 @@ const toggleFullscreen = () => {
 
 const goToChapter = () => {
   navigateTo(`/${storySlug}/${selectedChapter.value}`)
+}
+
+const handleUnlockChapter = async () => {
+  if (!chapterData.value?.data?.id) return
+
+  unlocking.value = true
+  try {
+    const data = await $http<{
+      ok: boolean
+      message: string
+      data: {
+        unlock: {
+          id: number
+          chapter_id: number
+          coin_spent: number
+        }
+        balance: number
+      }
+    }>('/coins/unlock-chapter', {
+      method: 'POST',
+      body: {
+        chapter_id: chapterData.value.data.id
+      }
+    })
+
+    if (data?.ok) {
+      toast.add({
+        title: 'Thành công',
+        description: data.message || 'Đã mở khóa chapter thành công',
+        color: 'success'
+      })
+
+      // Update user coin
+      if (auth.user) {
+        auth.user.coin = data.data.balance
+      }
+
+      // Refresh chapter data
+      await refreshChapter()
+    }
+  } catch (error: any) {
+    const errorData = error.data || error.response?._data
+    toast.add({
+      title: 'Lỗi',
+      description: errorData?.message || 'Không thể mở khóa chapter',
+      color: 'error'
+    })
+  } finally {
+    unlocking.value = false
+  }
 }
 
 watch(() => chapterSlug, () => {

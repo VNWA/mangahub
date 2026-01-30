@@ -6,6 +6,15 @@ export type User = {
     name: string;
     email: string;
     avatar?: string | null;
+    coin?: number;
+    notify_email_new_chapter?: boolean;
+    notify_email_comment_reply?: boolean;
+    notify_email_recommendations?: boolean;
+    notify_push_new_chapter?: boolean;
+    notify_push_comment_reply?: boolean;
+    privacy_public_profile?: boolean;
+    privacy_show_reading_history?: boolean;
+    privacy_show_favorites?: boolean;
     must_verify_email: boolean;
     has_password: boolean;
     roles: string[];

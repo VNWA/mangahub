@@ -2,20 +2,12 @@
   <div class="space-y-3">
     <!-- List View -->
     <div v-if="readingHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
-      <NuxtLink
-        v-for="item in readingHistory"
-        :key="item.id"
-        :to="`/${item.story.slug}/${item.lastChapterId}`"
-        class="bg-white dark:bg-slate-800 rounded-lg p-4 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex gap-4"
-      >
+      <NuxtLink v-for="item in readingHistory" :key="item.id" :to="`/${item.story.slug}/${item.lastChapterId}`"
+        class="bg-white dark:bg-slate-800 rounded-lg p-4 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex gap-4">
         <!-- Thumbnail -->
-        <img
-          :src="item.story.coverImage"
-          :alt="item.story.title"
-          class="w-16 h-20 object-cover rounded flex-shrink-0"
-        />
+        <img :src="item.story.coverImage" :alt="item.story.title"
+          class="w-16 h-20 object-cover rounded flex-shrink-0" />
 
-        <!-- Content -->
         <div class="flex-1 min-w-0">
           <h3 class="font-semibold text-slate-900 dark:text-white line-clamp-1">
             {{ item.story.title }}
@@ -35,15 +27,12 @@
         </div>
 
         <!-- Progress Bar -->
-        <div class="flex flex-col items-end justify-center">
+        <!-- <div class="flex flex-col items-end justify-center">
           <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
-            <div
-              class="h-full bg-primary transition-all"
-              :style="{ width: `${item.progress}%` }"
-            ></div>
+            <div class="h-full bg-primary transition-all" :style="{ width: `${item.progress}%` }"></div>
           </div>
           <span class="text-xs text-slate-600 dark:text-slate-400 mt-1">{{ item.progress }}%</span>
-        </div>
+        </div> -->
       </NuxtLink>
     </div>
 

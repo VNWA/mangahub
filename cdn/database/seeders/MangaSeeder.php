@@ -27,7 +27,7 @@ class MangaSeeder extends Seeder
         $categories = MangaCategory::factory()->count(10)->create();
 
         // Create Authors
-        $authors = MangaAuthor::factory()->count(15)->create();
+        $authors = MangaAuthor::factory()->count(5)->create();
 
         // Create Badges
         $badges = MangaBadge::factory()->count(5)->create();
@@ -37,9 +37,10 @@ class MangaSeeder extends Seeder
 
         // Create Mangas
         $mangas = Manga::factory()
-            ->count(50)
+            ->count(20)
             ->create([
                 'user_id' => $admin?->id ?? User::factory(),
+                'avatar'=>'https://picsum.photos/800/1200?random='.fake()->numberBetween(1, 1000),
             ])
             ->each(function (Manga $manga) use ($categories, $authors, $badges, $defaultServer) {
                 // Attach random categories

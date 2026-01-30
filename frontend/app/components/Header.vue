@@ -25,34 +25,17 @@
         <!-- Search Bar with Autocomplete -->
         <div class="hidden lg:flex flex-1 max-w-md mx-2 lg:mx-4 relative">
           <div class="w-full relative">
-            <UInput
-              v-model="searchQuery"
-              icon="i-heroicons-magnifying-glass"
-              placeholder="Tìm truyện..."
-              @keyup.enter="handleSearch"
-              @input="handleSearchInput"
-              @focus="showSuggestions = true"
-              @blur="handleSearchBlur"
-              size="sm"
-              class="w-full"
-            />
+            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Tìm truyện..."
+              @keyup.enter="handleSearch" @input="handleSearchInput" @focus="showSuggestions = true"
+              @blur="handleSearchBlur" size="sm" class="w-full" />
             <!-- Search Suggestions -->
-            <div
-              v-if="showSuggestions && searchSuggestions.length > 0"
-              class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
-            >
-              <NuxtLink
-                v-for="suggestion in searchSuggestions"
-                :key="suggestion.id"
-                :to="`/${suggestion.slug}`"
+            <div v-if="showSuggestions && searchSuggestions.length > 0"
+              class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+              <NuxtLink v-for="suggestion in searchSuggestions" :key="suggestion.id" :to="`/${suggestion.slug}`"
                 class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-b-0"
-                @click="showSuggestions = false"
-              >
-                <img
-                  :src="suggestion.coverImage || 'https://via.placeholder.com/60x80'"
-                  :alt="suggestion.title"
-                  class="w-12 h-16 object-cover rounded"
-                />
+                @click="showSuggestions = false">
+                <img :src="suggestion.coverImage || 'https://via.placeholder.com/60x80'" :alt="suggestion.title"
+                  class="w-12 h-16 object-cover rounded" />
                 <div class="flex-1 min-w-0">
                   <p class="font-medium text-slate-900 dark:text-white truncate">{{ suggestion.title }}</p>
                   <p class="text-xs text-slate-600 dark:text-slate-400 truncate">{{ suggestion.author }}</p>
@@ -73,6 +56,13 @@
 
           <!-- Notifications (only when logged in) -->
           <NotificationDropdown v-if="isLoggedIn" />
+
+          <!-- Coin Balance (only when logged in) -->
+          <NuxtLink v-if="isLoggedIn" to="/coins"
+            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors">
+            <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+            <span class="text-sm font-semibold text-yellow-700 dark:text-yellow-300">{{ formatCoin(userCoin) }}</span>
+          </NuxtLink>
 
           <!-- User Menu / Auth -->
           <template v-if="isLoggedIn">
@@ -107,33 +97,17 @@
 
       <!-- Mobile Search Bar -->
       <div v-if="showMobileSearch" class="pb-3 lg:hidden relative">
-        <UInput
-          v-model="searchQuery"
-          icon="i-heroicons-magnifying-glass"
-          placeholder="Tìm truyện..."
-          @keyup.enter="handleSearch"
-          @input="handleSearchInput"
-          @focus="showSuggestions = true"
-          @blur="handleSearchBlur"
-          size="sm"
-        />
+        <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Tìm truyện..."
+          @keyup.enter="handleSearch" @input="handleSearchInput" @focus="showSuggestions = true"
+          @blur="handleSearchBlur" size="sm" />
         <!-- Mobile Search Suggestions -->
-        <div
-          v-if="showSuggestions && searchSuggestions.length > 0"
-          class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto"
-        >
-          <NuxtLink
-            v-for="suggestion in searchSuggestions"
-            :key="suggestion.id"
-            :to="`/${suggestion.slug}`"
+        <div v-if="showSuggestions && searchSuggestions.length > 0"
+          class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+          <NuxtLink v-for="suggestion in searchSuggestions" :key="suggestion.id" :to="`/${suggestion.slug}`"
             class="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors border-b border-slate-100 dark:border-slate-700 last:border-b-0"
-            @click="showSuggestions = false; showMobileSearch = false"
-          >
-            <img
-              :src="suggestion.coverImage || 'https://via.placeholder.com/60x80'"
-              :alt="suggestion.title"
-              class="w-12 h-16 object-cover rounded"
-            />
+            @click="showSuggestions = false; showMobileSearch = false">
+            <img :src="suggestion.coverImage || 'https://via.placeholder.com/60x80'" :alt="suggestion.title"
+              class="w-12 h-16 object-cover rounded" />
             <div class="flex-1 min-w-0">
               <p class="font-medium text-slate-900 dark:text-white truncate">{{ suggestion.title }}</p>
               <p class="text-xs text-slate-600 dark:text-slate-400 truncate">{{ suggestion.author }}</p>
@@ -152,7 +126,7 @@ const searchQuery = ref('')
 const showMobileSearch = ref(false)
 const showSuggestions = ref(false)
 const searchSuggestions = ref<any[]>([])
-let searchTimeout: NodeJS.Timeout | null = null
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 const isLoggedIn = computed(() => !!auth.logged && !!auth.user?.email)
 
@@ -163,11 +137,18 @@ const secondaryNav = [
   { label: 'Hot', to: '/trending' }
 ]
 
+const userCoin = computed(() => auth.user?.coin ?? 0)
+
+const formatCoin = (coin: number) => {
+  return new Intl.NumberFormat('vi-VN').format(coin)
+}
+
 const userMenuItems = computed(() => [
   [
     { label: 'Trang cá nhân', icon: 'i-heroicons-user', to: '/profile' },
     { label: 'Truyện yêu thích', icon: 'i-heroicons-heart', to: '/favorites' },
-    { label: 'Lịch sử đọc', icon: 'i-heroicons-clock', to: '/profile?tab=reading' }
+    { label: 'Lịch sử đọc', icon: 'i-heroicons-clock', to: '/profile?tab=reading' },
+    { label: 'Quản lý Coin', icon: 'i-heroicons-currency-dollar', to: '/coins' }
   ],
   [
     { label: 'Cài đặt', icon: 'i-heroicons-cog-6-tooth', to: '/profile?tab=settings' },

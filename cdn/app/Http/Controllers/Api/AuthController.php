@@ -113,7 +113,7 @@ class AuthController extends Controller
         }
 
         // Generate unique guest email
-        $guestEmail = 'guest_' . uniqid() . '_' . time() . '@guest.local';
+        $guestEmail = 'guest_'.uniqid().'_'.time().'@guest.local';
 
         $user = User::create([
             'name' => $request->name,
@@ -158,8 +158,8 @@ class AuthController extends Controller
     public function syncData(Request $request): JsonResponse
     {
         $user = $request->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthorized',
@@ -170,7 +170,7 @@ class AuthController extends Controller
         $readingHistory = $request->input('reading_history', []);
 
         // Sync favorites
-        if (is_array($favorites) && !empty($favorites)) {
+        if (is_array($favorites) && ! empty($favorites)) {
             foreach ($favorites as $mangaId) {
                 if (is_numeric($mangaId)) {
                     \App\Models\Favorite::firstOrCreate([
@@ -182,7 +182,7 @@ class AuthController extends Controller
         }
 
         // Sync reading history
-        if (is_array($readingHistory) && !empty($readingHistory)) {
+        if (is_array($readingHistory) && ! empty($readingHistory)) {
             foreach ($readingHistory as $item) {
                 if (isset($item['manga_id']) && is_numeric($item['manga_id'])) {
                     \App\Models\ReadingHistory::updateOrCreate(
@@ -214,6 +214,87 @@ class AuthController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'Device disconnected successfully',
+        ]);
+    }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'avatar' => 'sometimes|string|max:255',
+        ]);
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+
+        if ($request->has('avatar')) {
+            $user->avatar = $request->avatar;
+        }
+
+        $user->save();
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Cập nhật hồ sơ thành công',
+            'user' => $this->getUserData($user->fresh()),
+        ]);
+    }
+
+    /**
+     * Update user settings
+     */
+    public function updateSettings(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $request->validate([
+            'notify_email_new_chapter' => 'sometimes|boolean',
+            'notify_email_comment_reply' => 'sometimes|boolean',
+            'notify_email_recommendations' => 'sometimes|boolean',
+            'notify_push_new_chapter' => 'sometimes|boolean',
+            'notify_push_comment_reply' => 'sometimes|boolean',
+            'privacy_public_profile' => 'sometimes|boolean',
+            'privacy_show_reading_history' => 'sometimes|boolean',
+            'privacy_show_favorites' => 'sometimes|boolean',
+        ]);
+
+        $user->fill($request->only([
+            'notify_email_new_chapter',
+            'notify_email_comment_reply',
+            'notify_email_recommendations',
+            'notify_push_new_chapter',
+            'notify_push_comment_reply',
+            'privacy_public_profile',
+            'privacy_show_reading_history',
+            'privacy_show_favorites',
+        ]));
+
+        $user->save();
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Cập nhật cài đặt thành công',
+            'user' => $this->getUserData($user->fresh()),
         ]);
     }
 
@@ -272,11 +353,13 @@ class AuthController extends Controller
 
             // Redirect to frontend with token
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            return redirect($frontendUrl . '/auth/callback?token=' . urlencode($token));
+
+            return redirect($frontendUrl.'/auth/callback?token='.urlencode($token));
         } catch (\Exception $e) {
             // Redirect to frontend with error
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            return redirect($frontendUrl . '/auth/callback?error=' . urlencode($e->getMessage()));
+
+            return redirect($frontendUrl.'/auth/callback?error='.urlencode($e->getMessage()));
         }
     }
 
@@ -335,11 +418,13 @@ class AuthController extends Controller
 
             // Redirect to frontend with token
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            return redirect($frontendUrl . '/auth/callback?token=' . urlencode($token));
+
+            return redirect($frontendUrl.'/auth/callback?token='.urlencode($token));
         } catch (\Exception $e) {
             // Redirect to frontend with error
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
-            return redirect($frontendUrl . '/auth/callback?error=' . urlencode($e->getMessage()));
+
+            return redirect($frontendUrl.'/auth/callback?error='.urlencode($e->getMessage()));
         }
     }
 }

@@ -29,6 +29,15 @@ class User extends Authenticatable
         'provider',
         'avatar',
         'is_guest',
+        'coin',
+        'notify_email_new_chapter',
+        'notify_email_comment_reply',
+        'notify_email_recommendations',
+        'notify_push_new_chapter',
+        'notify_push_comment_reply',
+        'privacy_public_profile',
+        'privacy_show_reading_history',
+        'privacy_show_favorites',
     ];
 
     /**
@@ -55,6 +64,15 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'is_guest' => 'boolean',
+            'coin' => 'integer',
+            'notify_email_new_chapter' => 'boolean',
+            'notify_email_comment_reply' => 'boolean',
+            'notify_email_recommendations' => 'boolean',
+            'notify_push_new_chapter' => 'boolean',
+            'notify_push_comment_reply' => 'boolean',
+            'privacy_public_profile' => 'boolean',
+            'privacy_show_reading_history' => 'boolean',
+            'privacy_show_favorites' => 'boolean',
         ];
     }
 
@@ -72,6 +90,72 @@ class User extends Authenticatable
     public function readingHistory()
     {
         return $this->hasMany(ReadingHistory::class)->orderBy('last_read_at', 'desc');
+    }
+
+    /**
+     * Get user coin transactions
+     */
+    public function coinTransactions()
+    {
+        return $this->hasMany(CoinTransaction::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get user chapter unlocks
+     */
+    public function chapterUnlocks()
+    {
+        return $this->hasMany(ChapterUnlock::class);
+    }
+
+    /**
+     * Check if user has unlocked a chapter
+     */
+    public function hasUnlockedChapter(int $chapterId): bool
+    {
+        return $this->chapterUnlocks()->where('manga_chapter_id', $chapterId)->exists();
+    }
+
+    /**
+     * Add coin to user
+     */
+    public function addCoin(int $amount, ?string $description = null, ?string $referenceType = null, ?int $referenceId = null): CoinTransaction
+    {
+        $this->increment('coin', $amount);
+        $this->refresh();
+
+        return CoinTransaction::create([
+            'user_id' => $this->id,
+            'type' => 'deposit',
+            'amount' => $amount,
+            'description' => $description ?? 'Nạp coin',
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'balance_after' => $this->coin,
+        ]);
+    }
+
+    /**
+     * Spend coin from user
+     */
+    public function spendCoin(int $amount, ?string $description = null, ?string $referenceType = null, ?int $referenceId = null): CoinTransaction
+    {
+        if ($this->coin < $amount) {
+            throw new \Exception('Không đủ coin');
+        }
+
+        $this->decrement('coin', $amount);
+        $this->refresh();
+
+        return CoinTransaction::create([
+            'user_id' => $this->id,
+            'type' => 'spend',
+            'amount' => $amount,
+            'description' => $description ?? 'Tiêu coin',
+            'reference_type' => $referenceType,
+            'reference_id' => $referenceId,
+            'balance_after' => $this->coin,
+        ]);
     }
 
     /**

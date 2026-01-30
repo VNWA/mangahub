@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChapterController;
+use App\Http\Controllers\Api\CoinController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\FavoriteController;
 use App\Http\Controllers\Api\MangaController;
@@ -127,6 +128,8 @@ Route::prefix('v1')->group(function () {
         Route::get('user', [AuthController::class, 'user'])->name('user');
         Route::post('sync-data', [AuthController::class, 'syncData'])->name('sync.data');
         Route::post('devices/disconnect', [AuthController::class, 'deviceDisconnect'])->name('devices.disconnect');
+        Route::put('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+        Route::put('settings', [AuthController::class, 'updateSettings'])->name('settings.update');
 
         // Favorites
         Route::prefix('favorites')->group(function () {
@@ -149,6 +152,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
             Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+        });
+
+        // Coin routes
+        Route::prefix('coins')->group(function () {
+            Route::get('/balance', [CoinController::class, 'balance'])->name('coins.balance');
+            Route::post('/deposit', [CoinController::class, 'deposit'])->name('coins.deposit');
+            Route::get('/transactions', [CoinController::class, 'transactions'])->name('coins.transactions');
+            Route::post('/unlock-chapter', [CoinController::class, 'unlockChapter'])->name('coins.unlock-chapter');
+            Route::get('/unlock-history', [CoinController::class, 'unlockHistory'])->name('coins.unlock-history');
         });
     });
 });

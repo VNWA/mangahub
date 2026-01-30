@@ -20,12 +20,16 @@ class MangaChapter extends Model
         'name',
         'slug',
         'description',
+        'coin_cost',
+        'is_locked',
     ];
 
     protected function casts(): array
     {
         return [
             'order' => 'integer',
+            'coin_cost' => 'integer',
+            'is_locked' => 'boolean',
         ];
     }
 
@@ -87,5 +91,38 @@ class MangaChapter extends Model
     public function allComments()
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function unlocks()
+    {
+        return $this->hasMany(ChapterUnlock::class);
+    }
+
+    /**
+     * Check if a user has unlocked this chapter
+     */
+    public function isUnlockedBy(?int $userId): bool
+    {
+        if (! $userId) {
+            return false;
+        }
+
+        return $this->unlocks()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Check if chapter is accessible (not locked or unlocked by user)
+     */
+    public function isAccessible(?int $userId): bool
+    {
+        if (! $this->is_locked) {
+            return true;
+        }
+
+        if (! $userId) {
+            return false;
+        }
+
+        return $this->isUnlockedBy($userId);
     }
 }
