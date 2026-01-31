@@ -1,0 +1,110 @@
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx:/etc/nginx/conf.d
+    depends_on:
+      - vnwa-app
+      - nuxt
+    networks:
+      - app_net
+
+  vnwa-app:
+    build:
+      context: ./vnwa
+    command: php artisan octane:start --server=frankenphp --host=0.0.0.0 --port=8000
+    volumes:
+      - ./vnwa:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_net
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=vnwa
+      - DB_USERNAME=vnwa
+      - DB_PASSWORD=vnwa
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  vnwa-worker:
+    build:
+      context: ./vnwa
+    command: supervisord -c /var/www/html/supervisord.conf
+    volumes:
+      - ./vnwa:/var/www/html
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_net
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=vnwa
+      - DB_USERNAME=vnwa
+      - DB_PASSWORD=vnwa
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  nuxt:
+    build:
+      context: ./nuxt
+    command: bun run dev --host 0.0.0.0
+    volumes:
+      - ./nuxt:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - app_net
+    environment:
+      - NODE_ENV=development
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - app_net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vnwa
+      POSTGRES_USER: vnwa
+      POSTGRES_PASSWORD: vnwa
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U vnwa" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app_net:
+
+
+volumes:
+  pgdata:
