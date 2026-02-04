@@ -40,7 +40,7 @@ class MangaSeeder extends Seeder
             ->count(20)
             ->create([
                 'user_id' => $admin?->id ?? User::factory(),
-                'avatar'=>'https://picsum.photos/800/1200?random='.fake()->numberBetween(1, 1000),
+                'avatar' => 'https://picsum.photos/800/1200?random='.fake()->numberBetween(1, 1000),
             ])
             ->each(function (Manga $manga) use ($categories, $authors, $badges, $defaultServer) {
                 // Attach random categories
@@ -63,7 +63,7 @@ class MangaSeeder extends Seeder
                 }
 
                 // Create chapters for each manga
-                $chapterCount = fake()->numberBetween(5, 30);
+                $chapterCount = fake()->numberBetween(5, 10);
                 for ($i = 0; $i < $chapterCount; $i++) {
                     $chapter = MangaChapter::factory()->create([
                         'manga_id' => $manga->id,

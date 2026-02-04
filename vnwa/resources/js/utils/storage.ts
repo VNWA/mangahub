@@ -17,10 +17,8 @@ export function getStorageUrl(path: string | null | undefined): string | null {
         return path;
     }
 
-    // If it's a storage path, prepend the storage URL
-    // Laravel storage URL is typically /storage/ for public disk
-    const storageUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const storagePath = path.startsWith('/') ? path : `/storage/${path}`;
+    const storageUrl = import.meta.env.VITE_APP_STORAGE_URL || window.location.origin;
+    const storagePath = path.startsWith('/') ? path : `/${path}`;
 
     return `${storageUrl}${storagePath}`;
 }
@@ -52,12 +50,12 @@ export function getStoragePath(url: string | null | undefined): string | null {
     }
 
     const storageUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    
+
     // Remove the storage URL prefix
     if (url.startsWith(`${storageUrl}/storage/`)) {
         return url.replace(`${storageUrl}/storage/`, '');
     }
-    
+
     if (url.startsWith('/storage/')) {
         return url.replace('/storage/', '');
     }

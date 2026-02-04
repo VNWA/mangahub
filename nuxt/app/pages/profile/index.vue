@@ -1,15 +1,15 @@
 <template>
     <div>
         <div class="space-y-6">
-            <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Cài đặt tài khoản</h2>
+            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Cài đặt tài khoản</h2>
 
             <!-- Profile Information -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-6">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Thông tin cá nhân</h3>
+            <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 space-y-6">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Thông tin cá nhân</h3>
 
                 <!-- Name Setting -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                    <label class="block text-sm font-semibold text-zinc-900 dark:text-white mb-2">
                         Tên hiển thị
                     </label>
                     <UInput v-model="profileForm.name" type="text" placeholder="Nhập tên của bạn" />
@@ -17,36 +17,36 @@
 
                 <!-- Email Setting -->
                 <div>
-                    <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                    <label class="block text-sm font-semibold text-zinc-900 dark:text-white mb-2">
                         Email
                     </label>
                     <UInput :model-value="auth.user?.email" type="email" disabled />
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                         Email không thể thay đổi
                     </p>
                 </div>
 
                 <!-- Save Profile Button -->
-                <div class="flex gap-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+                <div class="flex gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                     <UButton @click="saveProfile" :loading="savingProfile" color="primary" label="Lưu thông tin" />
                 </div>
             </div>
 
             <!-- Notification Settings -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-6">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Cài đặt thông báo</h3>
+            <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 space-y-6">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Cài đặt thông báo</h3>
 
                 <div class="space-y-4">
                     <div>
-                        <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Thông báo qua Email</h4>
+                        <h4 class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Thông báo qua Email</h4>
                         <div class="space-y-3">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <UCheckbox v-model="settingsForm.notify_email_new_chapter" />
                                 <div class="flex-1">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         Nhận email khi có chương mới
                                     </span>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                         Nhận thông báo qua email khi truyện bạn theo dõi có chương mới
                                     </p>
                                 </div>
@@ -54,10 +54,10 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <UCheckbox v-model="settingsForm.notify_email_comment_reply" />
                                 <div class="flex-1">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         Nhận email khi có phản hồi bình luận
                                     </span>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                         Nhận thông báo qua email khi ai đó phản hồi bình luận của bạn
                                     </p>
                                 </div>
@@ -65,10 +65,10 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <UCheckbox v-model="settingsForm.notify_email_recommendations" />
                                 <div class="flex-1">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         Nhận email về truyện được gợi ý
                                     </span>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                         Nhận email về các truyện được gợi ý dựa trên sở thích của bạn
                                     </p>
                                 </div>
@@ -76,16 +76,16 @@
                         </div>
                     </div>
 
-                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
-                        <h4 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Thông báo Push</h4>
+                    <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                        <h4 class="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">Thông báo Push</h4>
                         <div class="space-y-3">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <UCheckbox v-model="settingsForm.notify_push_new_chapter" />
                                 <div class="flex-1">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         Nhận thông báo push khi có chương mới
                                     </span>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                         Nhận thông báo trên trình duyệt khi truyện bạn theo dõi có chương mới
                                     </p>
                                 </div>
@@ -93,10 +93,10 @@
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <UCheckbox v-model="settingsForm.notify_push_comment_reply" />
                                 <div class="flex-1">
-                                    <span class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                         Nhận thông báo push khi có phản hồi bình luận
                                     </span>
-                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                         Nhận thông báo trên trình duyệt khi ai đó phản hồi bình luận của bạn
                                     </p>
                                 </div>
@@ -106,24 +106,24 @@
                 </div>
 
                 <!-- Save Settings Button -->
-                <div class="flex gap-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+                <div class="flex gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                     <UButton @click="saveSettings" :loading="savingSettings" color="primary"
                         label="Lưu cài đặt thông báo" />
                 </div>
             </div>
 
             <!-- Privacy Settings -->
-            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 space-y-6">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Quyền riêng tư</h3>
+            <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 space-y-6">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4">Quyền riêng tư</h3>
 
                 <div class="space-y-3">
                     <label class="flex items-center gap-3 cursor-pointer">
                         <UCheckbox v-model="settingsForm.privacy_public_profile" />
                         <div class="flex-1">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">
+                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                 Cho phép mọi người xem hồ sơ của tôi
                             </span>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                 Khi bật, người khác có thể xem thông tin công khai trong hồ sơ của bạn
                             </p>
                         </div>
@@ -131,10 +131,10 @@
                     <label class="flex items-center gap-3 cursor-pointer">
                         <UCheckbox v-model="settingsForm.privacy_show_reading_history" />
                         <div class="flex-1">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">
+                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                 Hiển thị lịch sử đọc công khai
                             </span>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                 Cho phép người khác xem danh sách truyện bạn đã đọc
                             </p>
                         </div>
@@ -142,10 +142,10 @@
                     <label class="flex items-center gap-3 cursor-pointer">
                         <UCheckbox v-model="settingsForm.privacy_show_favorites" />
                         <div class="flex-1">
-                            <span class="text-sm text-slate-700 dark:text-slate-300">
+                            <span class="text-sm text-zinc-700 dark:text-zinc-300">
                                 Hiển thị truyện yêu thích công khai
                             </span>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                            <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                 Cho phép người khác xem danh sách truyện bạn yêu thích
                             </p>
                         </div>
@@ -153,7 +153,7 @@
                 </div>
 
                 <!-- Save Privacy Button -->
-                <div class="flex gap-3 border-t border-slate-200 dark:border-slate-700 pt-4">
+                <div class="flex gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                     <UButton @click="saveSettings" :loading="savingSettings" color="primary"
                         label="Lưu cài đặt quyền riêng tư" />
                 </div>
@@ -166,29 +166,19 @@
                 <p class="text-sm text-red-800 dark:text-red-300 mb-4">
                     Xóa tài khoản sẽ xóa vĩnh viễn tất cả dữ liệu của bạn. Hành động này không thể hoàn tác.
                 </p>
-                <UButton color="red" variant="outline" label="Xóa tài khoản" @click="showDeleteConfirm = true" />
+                <UButton color="red" variant="outline" label="Xóa tài khoản" @click="showDeleteConfirm()" />
             </div>
         </div>
 
-        <!-- Delete Confirmation Modal -->
-        <UModal v-model="showDeleteConfirm">
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Xác nhận xóa tài khoản</h3>
-                <p class="text-sm text-slate-600 dark:text-slate-400 mb-6">
-                    Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.
-                </p>
-                <div class="flex gap-3 justify-end">
-                    <UButton color="neutral" variant="ghost" label="Hủy" @click="showDeleteConfirm = false" />
-                    <UButton color="red" label="Xóa tài khoản" @click="deleteAccount" :loading="deletingAccount" />
-                </div>
-            </div>
-        </UModal>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ModalDeleteAccount } from '#components'
+
 const auth = useAuthStore()
 const toast = useToast()
+const overlay = useOverlay()
 
 const profileForm = ref({
     name: ''
@@ -207,7 +197,6 @@ const settingsForm = ref({
 
 const savingProfile = ref(false)
 const savingSettings = ref(false)
-const showDeleteConfirm = ref(false)
 const deletingAccount = ref(false)
 
 // Load user data
@@ -312,7 +301,6 @@ const deleteAccount = async () => {
             description: 'Tính năng xóa tài khoản đang được phát triển',
             color: 'info'
         })
-        showDeleteConfirm.value = false
     } catch (error: any) {
         const errorData = error.data || error.response?._data
         toast.add({
@@ -323,6 +311,14 @@ const deleteAccount = async () => {
     } finally {
         deletingAccount.value = false
     }
+}
+
+const showDeleteConfirm = () => {
+    const modal = overlay.create(ModalDeleteAccount)
+    modal.open({
+        onDelete: deleteAccount,
+        onClose: () => modal.close()
+    })
 }
 
 onMounted(() => {

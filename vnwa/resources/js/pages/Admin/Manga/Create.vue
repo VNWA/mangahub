@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select } from '@/components/ui/select';
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
@@ -257,35 +258,32 @@ const submit = () => {
                             <CardContent class="space-y-4">
                                 <div class="space-y-2">
                                     <Label for="status">Trạng thái *</Label>
-                                    <select
+                                    <Select
                                         id="status"
                                         v-model="form.status"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                        :options="[
+                                            { value: 'ongoing', label: 'Đang ra' },
+                                            { value: 'completed', label: 'Hoàn thành' },
+                                            { value: 'hiatus', label: 'Tạm ngưng' },
+                                            { value: 'cancelled', label: 'Hủy' },
+                                        ]"
                                         required
-                                    >
-                                        <option value="ongoing">Đang ra</option>
-                                        <option value="completed">Hoàn thành</option>
-                                        <option value="hiatus">Tạm ngưng</option>
-                                        <option value="cancelled">Hủy</option>
-                                    </select>
+                                    />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label for="author">Tác giả</Label>
-                                    <select
+                                    <Select
                                         id="author"
                                         v-model="form.manga_author_id"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                                    >
-                                        <option :value="null">Chọn tác giả</option>
-                                        <option
-                                            v-for="author in props.authors"
-                                            :key="author.id"
-                                            :value="author.id"
-                                        >
-                                            {{ author.name }}
-                                        </option>
-                                    </select>
+                                        :options="[
+                                            { value: null, label: 'Chọn tác giả' },
+                                            ...props.authors.map((author) => ({
+                                                value: author.id,
+                                                label: author.name,
+                                            })),
+                                        ]"
+                                    />
                                     <p class="text-xs text-muted-foreground">
                                         <Link :href="authors.create().url" class="text-primary hover:underline">Tạo tác giả mới</Link>
                                     </p>
@@ -293,24 +291,22 @@ const submit = () => {
 
                                 <div class="space-y-2">
                                     <Label for="badge">Badge</Label>
-                                    <select
+                                    <Select
                                         id="badge"
                                         v-model="form.manga_badge_id"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                                    >
-                                        <option :value="null">Chọn badge</option>
-                                        <option
-                                            v-for="badge in props.badges"
-                                            :key="badge.id"
-                                            :value="badge.id"
-                                        >
-                                            {{ badge.name }}
-                                        </option>
-                                    </select>
+                                        :options="[
+                                            { value: null, label: 'Chọn badge' },
+                                            ...props.badges.map((badge) => ({
+                                                value: badge.id,
+                                                label: badge.name,
+                                            })),
+                                        ]"
+                                    />
                                     <p class="text-xs text-muted-foreground">
                                         <Link :href="badges.create().url" class="text-primary hover:underline">Tạo badge mới</Link>
                                     </p>
                                 </div>
+
                             </CardContent>
                         </Card>
 

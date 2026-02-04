@@ -48,7 +48,7 @@ onMounted(async () => {
   <div class="flex items-center justify-center min-h-screen">
     <div class="text-center">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-      <p class="text-slate-600 dark:text-slate-400">Đang xử lý đăng nhập...</p>
+      <p class="text-zinc-600 dark:text-zinc-400">Đang xử lý đăng nhập...</p>
     </div>
   </div>
 </template>

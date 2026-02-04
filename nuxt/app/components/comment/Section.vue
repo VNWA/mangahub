@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Comment Form -->
-    <div v-if="auth.logged" class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+    <div v-if="auth.logged" class="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
       <div class="flex gap-3">
         <UAvatar
           :src="auth.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${auth.user?.email || 'user'}`"
@@ -23,8 +23,8 @@
     </div>
 
     <!-- Login Prompt -->
-    <div v-else class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 text-center">
-      <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
+    <div v-else class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 text-center">
+      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-3">
         Đăng nhập để bình luận
       </p>
       <UButton to="/auth/login" color="primary" size="sm">
@@ -36,31 +36,31 @@
     <div class="space-y-6">
       <div v-if="loading" class="space-y-4">
         <div v-for="i in 3" :key="i" class="animate-pulse">
-          <div class="bg-slate-200 dark:bg-slate-700 rounded-lg h-24"></div>
+          <div class="bg-zinc-200 dark:bg-zinc-700 rounded-lg h-24"></div>
         </div>
       </div>
 
       <div v-else-if="threads.length === 0" class="text-center py-8">
-        <UIcon name="i-heroicons-chat-bubble-left-right" class="w-12 h-12 text-slate-400 mx-auto mb-3" />
-        <p class="text-slate-600 dark:text-slate-400">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+        <UIcon name="i-heroicons-chat-bubble-left-right" class="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+        <p class="text-zinc-600 dark:text-zinc-400">Chưa có bình luận nào. Hãy là người đầu tiên!</p>
       </div>
 
       <!-- Thread (Root comment + replies) -->
       <div v-for="thread in threads" :key="thread.root.id"
-        class="space-y-3 border-b border-slate-200 dark:border-slate-700 pb-6 last:border-b-0">
+        class="space-y-3 border-b border-zinc-200 dark:border-zinc-700 pb-6 last:border-b-0">
         <!-- Root Comment -->
         <div>
           <CommentItem :comment="thread.root" :commentable-type="commentableType" :commentable-id="commentableId"
             @reply="handleReply" @edit="handleEdit" @delete="handleDelete" @react="handleReact" />
           <!-- Hiển thị số lượng replies -->
-          <div v-if="thread.total_replies > 0" class="ml-8 mt-2 text-sm text-slate-600 dark:text-slate-400">
+          <div v-if="thread.total_replies > 0" class="ml-8 mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             {{ thread.total_replies }} {{ thread.total_replies === 1 ? 'phản hồi' : 'phản hồi' }}
           </div>
         </div>
 
         <!-- Replies - Flat list, hiển thị rõ reply của comment nào -->
         <div v-if="thread.replies && thread.replies.length > 0"
-          class="ml-8 pl-4 border-l-2 border-slate-200 dark:border-slate-700 space-y-3">
+          class="ml-8 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-3">
           <CommentItem v-for="reply in thread.replies" :key="reply.id" :comment="reply"
             :commentable-type="commentableType" :commentable-id="commentableId" :is-reply="true" @reply="handleReply"
             @edit="handleEdit" @delete="handleDelete" @react="handleReact" />

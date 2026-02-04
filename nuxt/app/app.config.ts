@@ -12,9 +12,10 @@ const localTokenStorage: TokenStorage = {
 export default defineAppConfig({
     ui: {
         colors: {
-            primary: 'blue',
-            neutral: 'slate',
+            primary: 'zinc',
+            neutral: 'zinc',
         },
+
         textarea: {
             slots: {
                 root: 'relative inline-flex items-center w-full',
@@ -24,6 +25,10 @@ export default defineAppConfig({
                 ],
             },
         },
+        container: {
+            base: 'w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8'
+        },
+
     },
     echo: {
         tokenStorage: localTokenStorage,

@@ -1,35 +1,24 @@
 <template>
   <div class="flex items-center gap-3">
     <div class="relative">
-      <img
-        v-if="src"
-        :src="src"
-        :alt="alt"
-        :class="[
-          'rounded-full object-cover',
-          sizeClasses[size]
-        ]"
-      />
-      <div
-        v-else
-        :class="[
-          'rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold',
-          sizeClasses[size]
-        ]"
-      >
+      <img v-if="src" :src="src" :alt="alt" :class="[
+        'rounded-full object-cover',
+        sizeClasses[size]
+      ]" />
+      <div v-else :class="[
+        'rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold',
+        sizeClasses[size]
+      ]">
         {{ initials }}
       </div>
-      <div
-        v-if="status"
-        :class="[
-          'absolute bottom-0 right-0 rounded-full border-2 border-white',
-          statusClasses[status]
-        ]"
-      ></div>
+      <div v-if="status" :class="[
+        'absolute bottom-0 right-0 rounded-full border-2 border-white',
+        statusClasses[status]
+      ]"></div>
     </div>
     <div v-if="showName" class="flex-1">
-      <p class="font-semibold text-slate-900 dark:text-white">{{ name }}</p>
-      <p v-if="subtitle" class="text-xs text-slate-600 dark:text-slate-400">{{ subtitle }}</p>
+      <p class="font-semibold text-zinc-900 dark:text-white">{{ name }}</p>
+      <p v-if="subtitle" class="text-xs text-zinc-600 dark:text-zinc-400">{{ subtitle }}</p>
     </div>
   </div>
 </template>

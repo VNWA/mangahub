@@ -1,6 +1,6 @@
 <template>
-  <footer class="bg-slate-900 text-slate-300 py-12">
-    <div class="max-w-7xl mx-auto px-4">
+  <footer class="bg-zinc-900 text-zinc-300 py-12">
+    <UContainer>
       <div class="grid md:grid-cols-4 gap-8 mb-8">
         <!-- Company Info -->
         <div>
@@ -8,7 +8,7 @@
             <UIcon name="i-heroicons-book-open" class="w-6 h-6 text-blue-400" />
             <h3 class="text-xl font-bold text-white">WebTruyện</h3>
           </div>
-          <p class="text-sm text-slate-400">
+          <p class="text-sm text-zinc-400">
             Nền tảng đọc truyện tranh online lớn nhất Việt Nam
           </p>
         </div>
@@ -17,7 +17,9 @@
         <div>
           <h4 class="font-semibold text-white mb-4">Về chúng tôi</h4>
           <ul class="space-y-2 text-sm">
-            <li><NuxtLink to="/" class="hover:text-blue-400 transition-colors">Trang chủ</NuxtLink></li>
+            <li>
+              <NuxtLink to="/" class="hover:text-blue-400 transition-colors">Trang chủ</NuxtLink>
+            </li>
             <li><a href="#" class="hover:text-blue-400 transition-colors">Giới thiệu</a></li>
             <li><a href="#" class="hover:text-blue-400 transition-colors">Liên hệ</a></li>
           </ul>
@@ -27,9 +29,15 @@
         <div>
           <h4 class="font-semibold text-white mb-4">Thể loại</h4>
           <ul class="space-y-2 text-sm">
-            <li><NuxtLink to="/category/list" class="hover:text-blue-400 transition-colors">Tất cả thể loại</NuxtLink></li>
-            <li><NuxtLink to="/trending" class="hover:text-blue-400 transition-colors">Truyện hot</NuxtLink></li>
-            <li><NuxtLink to="/collection" class="hover:text-blue-400 transition-colors">Mới cập nhật</NuxtLink></li>
+            <li>
+              <NuxtLink to="/category/list" class="hover:text-blue-400 transition-colors">Tất cả thể loại</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/trending" class="hover:text-blue-400 transition-colors">Truyện hot</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/collection" class="hover:text-blue-400 transition-colors">Mới cập nhật</NuxtLink>
+            </li>
           </ul>
         </div>
 
@@ -45,34 +53,19 @@
       </div>
 
       <!-- Divider -->
-      <div class="border-t border-slate-700 pt-8">
+      <div class="border-t border-zinc-700 pt-8">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-sm text-slate-400">
+          <p class="text-sm text-zinc-400">
             &copy; 2024 WebTruyện. Tất cả các quyền được bảo lưu.
           </p>
           <div class="flex gap-4">
-            <UButton
-              icon="i-heroicons-globe-alt"
-              color="neutral"
-              variant="ghost"
-              aria-label="Website"
-            />
-            <UButton
-              icon="i-heroicons-globe-alt"
-              color="neutral"
-              variant="ghost"
-              aria-label="Facebook"
-            />
-            <UButton
-              icon="i-heroicons-globe-alt"
-              color="neutral"
-              variant="ghost"
-              aria-label="Twitter"
-            />
+            <UButton icon="i-heroicons-globe-alt" color="neutral" variant="ghost" aria-label="Website" />
+            <UButton icon="i-heroicons-globe-alt" color="neutral" variant="ghost" aria-label="Facebook" />
+            <UButton icon="i-heroicons-globe-alt" color="neutral" variant="ghost" aria-label="Twitter" />
           </div>
         </div>
       </div>
-    </div>
+    </UContainer>
   </footer>
 </template>
 

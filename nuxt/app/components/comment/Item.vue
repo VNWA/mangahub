@@ -1,5 +1,5 @@
 <template>
-  <div :id="`comment-${comment.id}`" class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+  <div :id="`comment-${comment.id}`" class="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
     <!-- Main Comment -->
     <div class="flex gap-3">
       <UAvatar
@@ -12,28 +12,28 @@
           <div class="flex items-center gap-2 flex-wrap">
             <!-- Hiển thị "Trả lời @username" nếu có parent_user -->
 
-            <span class="font-semibold text-slate-900 dark:text-white">
+            <span class="font-semibold text-zinc-900 dark:text-white">
               {{ comment.user?.name || 'Anonymous' }}
             </span>
             <span v-if="comment.parent_user"
-              class="text-xs text-slate-500 dark:text-slate-400 block border border-slate-200 dark:border-slate-700  px-2 rounded-md bg-slate-100 dark:bg-slate-700">
+              class="text-xs text-zinc-500 dark:text-zinc-400 block border border-zinc-200 dark:border-zinc-700  px-2 rounded-md bg-zinc-100 dark:bg-zinc-700">
               Trả lời
               <span class="font-semibold text-primary">{{ comment.parent_user.name }}</span>
             </span>
             <UBadge v-if="comment.is_pinned" color="primary" variant="soft" size="xs">
               Ghim
             </UBadge>
-            <span v-if="comment.is_edited" class="text-xs text-slate-500">
+            <span v-if="comment.is_edited" class="text-xs text-zinc-500">
               (đã chỉnh sửa)
             </span>
           </div>
-          <span class="text-xs text-slate-500">
+          <span class="text-xs text-zinc-500">
             {{ formatTime(comment.created_at) }}
           </span>
         </div>
 
         <!-- Content -->
-        <div class="text-slate-700 dark:text-slate-300 mb-3 whitespace-pre-wrap wrap-break-word">
+        <div class="text-zinc-700 dark:text-zinc-300 mb-3 whitespace-pre-wrap wrap-break-word">
           {{ comment.content }}
         </div>
 
@@ -44,7 +44,7 @@
             'flex items-center gap-1 text-sm transition-colors',
             comment.user_reaction === 'like'
               ? 'text-blue-600 dark:text-blue-400 font-semibold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400',
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400',
             !auth.logged && 'opacity-50 cursor-not-allowed'
           ]" :title="!auth.logged ? 'Đăng nhập để thích' : ''">
             <UIcon
@@ -58,7 +58,7 @@
             'flex items-center gap-1 text-sm transition-colors',
             comment.user_reaction === 'dislike'
               ? 'text-red-600 dark:text-red-400 font-semibold'
-              : 'text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400',
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400',
             !auth.logged && 'opacity-50 cursor-not-allowed'
           ]" :title="!auth.logged ? 'Đăng nhập để không thích' : ''">
             <UIcon
@@ -70,7 +70,7 @@
           <!-- Reply -->
           <button @click="handleReplyClick" :disabled="!auth.logged" :class="[
             'flex items-center gap-1 text-sm transition-colors',
-            'text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400',
+            'text-zinc-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400',
             !auth.logged && 'opacity-50 cursor-not-allowed'
           ]" :title="!auth.logged ? 'Đăng nhập để phản hồi' : ''">
             <UIcon name="i-heroicons-arrow-turn-down-left" class="w-4 h-4" />
@@ -83,7 +83,7 @@
           <!-- Edit/Delete (Owner only) -->
           <template v-if="comment.is_owner && auth.logged">
             <button @click="showEditForm = !showEditForm"
-              class="text-sm text-slate-600 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+              class="text-sm text-zinc-600 dark:text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
               title="Chỉnh sửa bình luận">
               <UIcon name="i-heroicons-pencil" class="w-4 h-4" />
               <span class="ml-1">Sửa</span>
@@ -98,7 +98,7 @@
         </div>
 
         <!-- Reply Form -->
-        <div v-if="showReplyForm" class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div v-if="showReplyForm" class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
           <div class="flex gap-3">
             <UAvatar
               :src="auth.user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${auth.user?.email || 'user'}`"
@@ -120,7 +120,7 @@
         </div>
 
         <!-- Edit Form -->
-        <div v-if="showEditForm" class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <div v-if="showEditForm" class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
           <UTextarea v-model="editContent" :rows="3" class="mb-2" />
           <div class="flex justify-end gap-2">
             <UButton @click="showEditForm = false; editContent = comment.content" variant="ghost" size="sm">
@@ -135,8 +135,8 @@
 
         <!-- Replies (nested) -->
         <div v-if="comment.replies && comment.replies.length > 0" :class="[
-          'mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-3',
-          comment.depth > 0 ? 'ml-4 pl-4 border-l-2 border-slate-200 dark:border-slate-700' : ''
+          'mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700 space-y-3',
+          comment.depth > 0 ? 'ml-4 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700' : ''
         ]">
           <CommentItem v-for="reply in comment.replies" :key="reply.id" :comment="reply"
             :commentable-type="commentableType" :commentable-id="commentableId" :is-reply="true"

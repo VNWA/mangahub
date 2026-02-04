@@ -1,96 +1,47 @@
 <template>
-  <div class="bg-white dark:bg-slate-900">
-    <!-- Reading Controls Header -->
-    <div class="sticky top-0 z-40 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-        <NuxtLink to="/" class="flex items-center gap-2 hover:text-primary">
-          <UIcon name="i-heroicons-arrow-left" class="w-5 h-5" />
-          <span class="text-sm font-semibold hidden sm:inline">Trang chủ</span>
-        </NuxtLink>
-
+  <div>
+    <!-- <div
+      class="sticky top-0 z-40 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-700 shadow-sm">
+      <UContainer class="py-3 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <!-- Font Size -->
-          <UDropdownMenu :items="fontSizeOptions" :popper="{ placement: 'bottom' }">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              icon="i-heroicons-document-text"
-              label="Cỡ chữ"
-              trailing-icon="i-heroicons-chevron-down"
-              size="sm"
-            />
-          </UDropdownMenu>
+       
+    <UButton color="neutral" variant="ghost" icon="i-heroicons-bars-3" square size="sm" class="md:hidden"
+      @click="showSidebar = true" />
+    <NuxtLink to="/" class="flex items-center gap-2 hover:text-primary">
+      <UIcon name="i-heroicons-arrow-left" class="w-5 h-5" />
+      <span class="text-sm font-semibold hidden sm:inline">Trang chủ</span>
+    </NuxtLink>
+  </div>
 
-          <!-- Background Color -->
-          <UDropdownMenu :items="bgColorOptions" :popper="{ placement: 'bottom' }">
-            <UButton
-              color="neutral"
-              variant="ghost"
-              icon="i-heroicons-swatch"
-              label="Nền"
-              trailing-icon="i-heroicons-chevron-down"
-              size="sm"
-            />
-          </UDropdownMenu>
+  <div class="flex items-center gap-2">
+    <USelect v-if="availableServers.length > 1" v-model="selectedServerId" :options="availableServers"
+      value-attribute="id" option-attribute="name" size="sm" class="min-w-[150px] hidden sm:block"
+      @change="switchServer" />
+    <UButton v-if="chapterData?.data?.id" color="neutral" variant="ghost" icon="i-heroicons-flag" square size="sm"
+      @click="showReportModal()" />
+    <UButton color="neutral" variant="ghost" icon="i-heroicons-arrows-pointing-out" square size="sm"
+      @click="toggleFullscreen" />
+  </div>
+  </UContainer>
+  </div> -->
 
-          <!-- Settings -->
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-cog-6-tooth"
-            square
-            size="sm"
-          />
 
-          <!-- Fullscreen -->
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-arrow-up-right"
-            square
-            size="sm"
-            @click="toggleFullscreen"
-          />
-        </div>
-      </div>
-    </div>
+    <div class="min-h-screen">
+      <UContainer class="py-8 md:py-12 max-w-5xl">
+        <ChapterHeader :chapter="chapter" :manga-slug="mangaSlug" />
 
-    <!-- Main Content -->
-    <main :style="{ fontSize: `${fontSize}px`, backgroundColor: bgColor }" class="min-h-screen transition-all">
-      <div class="container mx-auto px-4 py-12 max-w-4xl">
-        <!-- Chapter Header -->
-        <div v-if="chapter" class="mb-8 pb-8 border-b border-slate-200 dark:border-slate-700">
-          <h1 class="text-3xl md:text-4xl font-bold mb-2">
-            {{ chapter.title }}
-          </h1>
-          <div class="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
-            <span>{{ formatDate(chapter.uploadedAt) }}</span>
-            <NuxtLink
-              :to="`/${storySlug}`"
-              class="text-primary hover:underline"
-            >
-              ← Về trang truyện
-            </NuxtLink>
-          </div>
-        </div>
-
-        <!-- Locked Chapter Notice -->
-        <div v-if="chapterData?.data?.is_locked && !chapterData?.data?.is_accessible" class="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+        <div v-if="chapterData?.data?.is_locked && !chapterData?.data?.is_accessible"
+          class="mb-8 p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div class="flex items-start gap-4">
-            <UIcon name="i-heroicons-lock-closed" class="w-6 h-6 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+            <UIcon name="i-heroicons-lock-closed"
+              class="w-6 h-6 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
             <div class="flex-1">
               <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Chapter này đã bị khóa</h3>
               <p class="text-sm text-yellow-800 dark:text-yellow-300 mb-4">
                 Bạn cần {{ formatCoin(chapterData.data.coin_cost) }} coin để mở khóa chapter này.
               </p>
-              <UButton
-                v-if="auth.logged"
-                @click="handleUnlockChapter"
-                :loading="unlocking"
-                :disabled="userCoin < (chapterData.data.coin_cost || 0)"
-                color="yellow"
-                size="sm"
-              >
+              <UButton v-if="auth.logged" @click="handleUnlockChapter" :loading="unlocking"
+                :disabled="userCoin < (chapterData.data.coin_cost || 0)" color="warning" size="sm">
                 <UIcon name="i-heroicons-currency-dollar" class="w-4 h-4" />
                 Mở khóa với {{ formatCoin(chapterData.data.coin_cost || 0) }} coin
               </UButton>
@@ -103,113 +54,76 @@
           </div>
         </div>
 
-        <!-- Chapter Content -->
-        <article v-if="chapterData?.data?.is_accessible" :style="{ lineHeight: `${lineHeight}` }" class="prose dark:prose-invert max-w-none mb-12">
-          <div v-if="chapterData?.content?.images" class="space-y-4">
-            <img
-              v-for="(image, index) in chapterData.content.images"
-              :key="index"
-              :src="image"
-              :alt="`Page ${index + 1}`"
-              class="w-full h-auto rounded-lg shadow-sm"
-              loading="lazy"
-            />
+        <article v-if="chapterData?.data?.is_accessible" class="max-w-none mb-12">
+          <div v-if="chapterData?.data?.content?.images && chapterData.data.content.images.length > 0"
+            class="space-y-4">
+            <!-- <NuxtImg v-for="(image, index) in chapterData.data.content.images" :key="image" :src="image" width="500"
+              :alt="`Page ${index + 1}`" loading="lazy" decoding="async" sizes="100vw"
+              class="w-full h-auto rounded-lg shadow-sm" /> -->
+
+
+            <div v-for="(item, index) in chapterData.data.content.images" :key="index">
+              <img :src="item" :alt="`Page ${index + 1}`" :width="500" :height="500"
+                :loading="index > 8 ? 'lazy' : 'eager'" class="rounded-md size-full object-cover">
+            </div>
           </div>
-          <div v-else-if="chapterData?.content?.content" class="space-y-6">
-            <div v-html="chapterData.content.content" class="text-justify"></div>
-          </div>
-          <div v-else class="text-center py-12">
-            <p class="text-slate-500 dark:text-slate-400">Chưa có nội dung</p>
-          </div>
+
         </article>
 
-        <!-- Chapter Navigation -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
-          <NuxtLink
-            v-if="previousChapter"
-            :to="`/${storySlug}/${previousChapter.id}`"
-            class="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
-          >
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-arrow-left" class="w-5 h-5" />
-              <div>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Chương trước</p>
-                <p class="font-semibold">{{ previousChapter.title }}</p>
-              </div>
-            </div>
-          </NuxtLink>
-          <div v-else></div>
+        <ChapterNavigation :previous-chapter="previousChapter" :next-chapter="nextChapter" :manga-slug="mangaSlug" />
 
-          <NuxtLink
-            v-if="nextChapter"
-            :to="`/${storySlug}/${nextChapter.id}`"
-            class="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors text-right"
-          >
-            <div class="flex items-center justify-end gap-2 flex-1">
-              <div>
-                <p class="text-xs text-slate-600 dark:text-slate-400">Chương tiếp</p>
-                <p class="font-semibold">{{ nextChapter.title }}</p>
-              </div>
-              <UIcon name="i-heroicons-arrow-right" class="w-5 h-5" />
-            </div>
-          </NuxtLink>
-        </div>
-
-        <!-- Comments Section -->
-        <div class="pt-8 border-t border-slate-200 dark:border-slate-700">
+        <div class="pt-8 border-t border-zinc-200 dark:border-zinc-700">
           <h2 class="text-2xl font-bold mb-6">Bình luận chương</h2>
-          <CommentSection
-            v-if="chapterData?.data?.id"
-            :commentable-type="'MangaChapter'"
-            :commentable-id="chapterData.data.id"
-          />
+          <CommentSection v-if="chapterData?.data?.id" :commentable-type="'MangaChapter'"
+            :commentable-id="chapterData.data.id" />
         </div>
-      </div>
-    </main>
-
-    <!-- Bottom Navigation -->
-    <div class="sticky bottom-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-lg">
-      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-        <NuxtLink
-          v-if="previousChapter"
-          :to="`/${storySlug}/${previousChapter.id}`"
-          class="flex items-center gap-2 text-primary hover:opacity-80"
-        >
-          <UIcon name="i-heroicons-arrow-left" class="w-5 h-5" />
-          <span>Chương trước</span>
-        </NuxtLink>
-        <div v-else></div>
-
-        <!-- Chapter Selector -->
-        <USelect
-          v-model="selectedChapter"
-          :options="allChapters"
-          value-attribute="slug"
-          option-attribute="name"
-          size="sm"
-          class="min-w-[200px]"
-          @change="goToChapter"
-        />
-
-        <NuxtLink
-          v-if="nextChapter"
-          :to="`/${storySlug}/${nextChapter.id}`"
-          class="flex items-center gap-2 text-primary hover:opacity-80"
-        >
-          <span>Chương tiếp</span>
-          <UIcon name="i-heroicons-arrow-right" class="w-5 h-5" />
-        </NuxtLink>
-        <div v-else></div>
-      </div>
+      </UContainer>
     </div>
+
+    <div
+      class="sticky bottom-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-700 shadow-lg">
+      <UContainer class="lg:py-3 py-1 flex items-center justify-between gap-2">
+        <UButton :disabled="!previousChapter" :to="`/${mangaSlug}/${previousChapter ? previousChapter.id : ''}`"
+          color="neutral" variant="outline" icon="i-heroicons-arrow-left" class="shrink-0 disabled:opacity-50">
+          <span class="hidden sm:inline">Chương trước</span>
+        </UButton>
+        <USlideover side="right" :title="mangaData?.data?.name">
+          <UButton color="neutral" variant="outline" :label="chapterData?.data?.name" icon="i-heroicons-document-text"
+            trailing-icon="i-heroicons-chevron-down" />
+          <template #body>
+            <div class="space-y-4">
+              <h2 class="text-2xl font-bold mb-6">Danh sách chương</h2>
+              <div v-for="chapter in allChapters.reverse()" :key="chapter.id">
+                <NuxtLink :to="`/${mangaSlug}/${chapter.slug}`"
+                  class="block p-4 bg-white dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors border border-zinc-200 dark:border-zinc-700">
+                  {{ chapter.name }}
+                </NuxtLink>
+              </div>
+            </div>
+          </template>
+        </USlideover>
+
+
+        <UButton :disabled="!nextChapter" :to="`/${mangaSlug}/${nextChapter ? nextChapter.id : ''}`" color="neutral"
+          variant="outline" trailing-icon="i-heroicons-arrow-right" class="shrink-0 disabled:opacity-50">
+          <span class="hidden sm:inline">Chương tiếp</span>
+        </UButton>
+
+      </UContainer>
+    </div>
+
+
   </div>
 </template>
 
 <script setup lang="ts">
+import { ModalReportChapter } from '#components'
 
+const overlay = useOverlay()
+const showSidebar = ref(true)
 
 const route = useRoute()
-const storySlug = route.params.slug as string
+const mangaSlug = route.params.slug as string
 const chapterSlug = route.params.chapter as string
 const { addHistory } = useReadingHistory()
 const auth = useAuthStore()
@@ -221,14 +135,28 @@ const userCoin = computed(() => auth.user?.coin ?? 0)
 const formatCoin = (coin: number) => {
   return new Intl.NumberFormat('vi-VN').format(coin)
 }
-
-// Reading Settings
-const fontSize = ref(16)
-const lineHeight = ref(1.8)
-const bgColor = ref('#ffffff')
-const isDarkMode = ref(false)
-
+const showReportModal = () => {
+  const modal = overlay.create(ModalReportChapter)
+  modal.open({
+    manga_slug: mangaSlug,
+    chapter_slug: chapterSlug,
+    onClose: () => {
+      modal.close()
+    }
+  })
+}
+// Server selection
+const selectedServerId = ref<number | null>(null)
 // Load chapter data
+const chapterUrl = computed(() => {
+  const params = new URLSearchParams()
+  if (selectedServerId.value) {
+    params.set('server_id', selectedServerId.value.toString())
+  }
+  const queryString = params.toString()
+  return `/mangas/${mangaSlug}/chapters/${chapterSlug}${queryString ? `?${queryString}` : ''}`
+})
+
 const { data: chapterData, pending: chapterPending, refresh: refreshChapter } = useLazyHttp<{
   ok: boolean
   data: {
@@ -271,7 +199,7 @@ const { data: chapterData, pending: chapterPending, refresh: refreshChapter } = 
     created_at: string
     updated_at: string
   }
-}>(`/mangas/${storySlug}/chapters/${chapterSlug}`)
+}>(chapterUrl.value)
 
 // Load manga to get all chapters
 const { data: mangaData } = useLazyHttp<{
@@ -287,11 +215,30 @@ const { data: mangaData } = useLazyHttp<{
       order: number
     }>
   }
-}>(`/mangas/${storySlug}`)
+}>(`/mangas/${mangaSlug}`)
 
 const allChapters = computed(() => {
   return mangaData.value?.data?.chapters || []
 })
+
+const availableServers = computed(() => {
+  return chapterData.value?.data?.available_servers || []
+})
+
+// Set default server when chapter loads
+watch(chapterData, (data) => {
+  if (data?.data?.available_servers && data.data.available_servers.length > 0) {
+    if (!selectedServerId.value || !data.data.available_servers.find((s: any) => s.id === selectedServerId.value)) {
+      selectedServerId.value = data.data.content?.server_id || data.data.available_servers[0]?.id || null
+    }
+  }
+}, { immediate: true })
+
+const switchServer = () => {
+  refreshChapter()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 
 const chapter = computed(() => {
   const data = chapterData.value?.data
@@ -339,44 +286,13 @@ watch(chapterData, async (data) => {
   }
 }, { immediate: true })
 
-const fontSizeOptions = [
-  [
-    { label: 'Nhỏ (14px)', click: () => fontSize.value = 14 },
-    { label: 'Vừa (16px)', click: () => fontSize.value = 16 },
-    { label: 'Lớn (18px)', click: () => fontSize.value = 18 },
-    { label: 'Rất lớn (20px)', click: () => fontSize.value = 20 },
-  ]
-]
-
-const bgColorOptions = [
-  [
-    { label: 'Trắng', click: () => { bgColor.value = '#ffffff'; isDarkMode.value = false } },
-    { label: 'Xanh nhạt', click: () => bgColor.value = '#f0f4f8' },
-    { label: 'Vàng nhạt', click: () => bgColor.value = '#fdf7e6' },
-    { label: 'Xám tối', click: () => { bgColor.value = '#1e293b'; isDarkMode.value = true } },
-  ]
-]
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('vi-VN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
-
-const formatNumber = (num: number) => {
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
-  return num.toString()
-}
 
 const toggleFullscreen = () => {
   document.documentElement.requestFullscreen?.()
 }
 
 const goToChapter = () => {
-  navigateTo(`/${storySlug}/${selectedChapter.value}`)
+  navigateTo(`/${mangaSlug}/${selectedChapter.value}`)
 }
 
 const handleUnlockChapter = async () => {
@@ -440,13 +356,3 @@ useHead({
   title: computed(() => `${chapter.value?.title || 'Loading...'} - ${mangaData.value?.data?.name || 'Manga'}`)
 })
 </script>
-
-<style scoped>
-.prose {
-  color: inherit;
-}
-
-.dark .prose {
-  color: inherit;
-}
-</style>

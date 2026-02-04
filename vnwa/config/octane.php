@@ -218,7 +218,12 @@ return [
     | there isn't a specific time limit on Octane request execution time.
     |
     */
-
+'frankenphp' => [
+    'options' => [
+        'upload_max_filesize' => '50M',
+        'post_max_size' => '50M',
+    ],
+],
     'max_execution_time' => 30,
 
 ];

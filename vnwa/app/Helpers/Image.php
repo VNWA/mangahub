@@ -2,7 +2,6 @@
 
 namespace App\Helpers;
 
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 
 class Image
@@ -12,26 +11,37 @@ class Image
      */
     public static function convert(string $source, string $target, ?int $width = null, ?int $height = null, string $extension = 'webp', int $quality = 90): void
     {
-        $manager = new ImageManager(new GdDriver);
-
-        $image = $manager->read($source);
+        $manager = new ImageManager(['driver' => 'gd']);
+        $image = $manager->make($source);
 
         $maxSize = 1920;
 
         if ($width && $height) {
-            $image->cover($width, $height);
+            $image->fit($width, $height);
         } elseif ($width || $image->width() > $maxSize) {
-            $image->scale(width: $width ?? $maxSize);
+            $image->resize($width ?? $maxSize, null, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
         } elseif ($height || $image->height() > $maxSize) {
-            $image->scale(height: $height ?? $maxSize);
+            $image->resize(null, $height ?? $maxSize, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            });
         }
 
-        if ($extension === 'webp') {
-            $image->toWebp($quality)->save($target);
-        } elseif ($extension === 'jpeg') {
-            $image->toJpeg($quality)->save($target);
-        } elseif ($extension === 'png') {
-            $image->toPng()->save($target);
+        $extension = strtolower($extension);
+
+        if ($extension === 'png') {
+            $image->encode('png')->save($target);
+
+            return;
         }
+
+        if ($extension === 'jpg') {
+            $extension = 'jpeg';
+        }
+
+        $image->encode($extension, $quality)->save($target);
     }
 }

@@ -19,7 +19,12 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
-        "spatie/laravel-permission": "^6.24"
+        "league/flysystem-aws-s3-v3": "^3.31",
+        "rahulhaque/laravel-filepond": "^12.0",
+        "ralphjsmit/laravel-glide": "^1.3",
+        "spatie/laravel-permission": "^6.24",
+        "spiral/roadrunner-cli": "^2.6.0",
+        "spiral/roadrunner-http": "^3.3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -49,21 +54,17 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php artisan storage:link",
+            "@php artisan reverb:generate",
             "npm install",
             "npm run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \" php artisan octane:start --server=frankenphp --caddyfile=Caddyfile --watch\" \"php artisan reverb:start\" \"php artisan queue:listen --tries=1 --timeout=0\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,reverb,queue,logs,vite --kill-others"
         ],
         "dev:api": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan octane:start --watch\"  \"php artisan reverb:start\" \"php artisan queue:listen --tries=1 --timeout=0\" --names=octane,reverb,queue,logs --kill-others"
-        ],
-        "dev:ssr": [
-            "npm run build:ssr",
-            "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan inertia:start-ssr\" --names=server,queue,logs,ssr --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \" php artisan octane:start --server=frankenphp --caddyfile=Caddyfile --watch\"  \"php artisan reverb:start\" \"php artisan queue:listen --tries=1 --timeout=0\" --names=octane,reverb,queue,logs --kill-others"
         ],
         "lint": [
             "pint --parallel"

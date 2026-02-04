@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select } from '@/components/ui/select';
 import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
 import { ArrowLeft, Upload, X } from 'lucide-vue-next';
 import mangas from '@/routes/mangas';
-import { getStorageUrl } from '@/utils/storage';
 
 const toast = useToast();
 
@@ -20,6 +20,7 @@ interface Props {
         name: string;
         slug: string;
         avatar?: string;
+        avatar_url: string;
         description?: string;
         status: string;
         manga_author_id?: number;
@@ -51,7 +52,7 @@ const form = ref({
     categories: props.manga.categories.map((c) => c.id),
 });
 
-const avatarPreview = ref<string | null>(props.manga.avatar ? getStorageUrl(props.manga.avatar) : null);
+const avatarPreview = ref<string | null>(props.manga.avatar_url);
 
 const handleAvatarChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -114,6 +115,7 @@ const submit = () => {
 </script>
 
 <template>
+
     <Head :title="`Chỉnh sửa - ${manga.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -150,31 +152,19 @@ const submit = () => {
                             <CardContent class="space-y-4">
                                 <div class="space-y-2">
                                     <Label for="name">Tên Manga *</Label>
-                                    <Input
-                                        id="name"
-                                        v-model="form.name"
-                                        placeholder="Ví dụ: One Piece"
-                                        required
-                                    />
+                                    <Input id="name" v-model="form.name" placeholder="Ví dụ: One Piece" required />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label for="slug">Slug</Label>
-                                    <Input
-                                        id="slug"
-                                        v-model="form.slug"
-                                        placeholder="one-piece"
-                                    />
+                                    <Input id="slug" v-model="form.slug" placeholder="one-piece" />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label for="description">Mô tả</Label>
-                                    <textarea
-                                        id="description"
-                                        v-model="form.description"
+                                    <textarea id="description" v-model="form.description"
                                         class="min-h-[150px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] placeholder:text-muted-foreground"
-                                        placeholder="Mô tả về manga..."
-                                    />
+                                        placeholder="Mô tả về manga..." />
                                 </div>
                             </CardContent>
                         </Card>
@@ -187,17 +177,10 @@ const submit = () => {
                             </CardHeader>
                             <CardContent>
                                 <div class="grid gap-3 sm:grid-cols-2">
-                                    <label
-                                        v-for="category in props.categories"
-                                        :key="category.id"
-                                        class="flex items-center space-x-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :value="category.id"
-                                            v-model="form.categories"
-                                            class="rounded border-gray-300"
-                                        />
+                                    <label v-for="category in props.categories" :key="category.id"
+                                        class="flex items-center space-x-2 rounded-lg border p-3 cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <input type="checkbox" :value="category.id" v-model="form.categories"
+                                            class="rounded border-gray-300" />
                                         <span class="text-sm font-medium">{{ category.name }}</span>
                                     </label>
                                 </div>
@@ -215,38 +198,23 @@ const submit = () => {
                             </CardHeader>
                             <CardContent class="space-y-4">
                                 <div v-if="avatarPreview" class="relative">
-                                    <img
-                                        :src="avatarPreview"
-                                        alt="Preview"
-                                        class="w-full rounded-lg border"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="sm"
-                                        class="absolute right-2 top-2"
-                                        @click="removeAvatar"
-                                    >
+                                    <img :src="avatarPreview" alt="Preview" class="w-full rounded-lg border" />
+                                    <Button type="button" variant="destructive" size="sm" class="absolute right-2 top-2"
+                                        @click="removeAvatar">
                                         <X class="h-4 w-4" />
                                     </Button>
                                 </div>
                                 <div>
                                     <Label for="avatar-input" class="cursor-pointer">
                                         <div
-                                            class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:bg-muted/50 transition-colors"
-                                        >
+                                            class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:bg-muted/50 transition-colors">
                                             <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
                                             <p class="text-sm font-medium">Click để upload</p>
                                             <p class="text-xs text-muted-foreground">JPG, PNG (tối đa 2MB)</p>
                                         </div>
                                     </Label>
-                                    <Input
-                                        id="avatar-input"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        @change="handleAvatarChange"
-                                    />
+                                    <Input id="avatar-input" type="file" accept="image/*" class="hidden"
+                                        @change="handleAvatarChange" />
                                 </div>
                             </CardContent>
                         </Card>
@@ -260,54 +228,36 @@ const submit = () => {
                             <CardContent class="space-y-4">
                                 <div class="space-y-2">
                                     <Label for="status">Trạng thái *</Label>
-                                    <select
-                                        id="status"
-                                        v-model="form.status"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                                        required
-                                    >
-                                        <option value="ongoing">Đang ra</option>
-                                        <option value="completed">Hoàn thành</option>
-                                        <option value="hiatus">Tạm ngưng</option>
-                                        <option value="cancelled">Hủy</option>
-                                    </select>
+                                    <Select id="status" v-model="form.status" :options="[
+                                        { value: 'ongoing', label: 'Đang ra' },
+                                        { value: 'completed', label: 'Hoàn thành' },
+                                        { value: 'hiatus', label: 'Tạm ngưng' },
+                                        { value: 'cancelled', label: 'Hủy' },
+                                    ]" required />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label for="author">Tác giả</Label>
-                                    <select
-                                        id="author"
-                                        v-model="form.manga_author_id"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                                    >
-                                        <option :value="null">Chọn tác giả</option>
-                                        <option
-                                            v-for="author in props.authors"
-                                            :key="author.id"
-                                            :value="author.id"
-                                        >
-                                            {{ author.name }}
-                                        </option>
-                                    </select>
+                                    <Select id="author" v-model="form.manga_author_id" :options="[
+                                        { value: null, label: 'Chọn tác giả' },
+                                        ...props.authors.map((author) => ({
+                                            value: author.id,
+                                            label: author.name,
+                                        })),
+                                    ]" />
                                 </div>
 
                                 <div class="space-y-2">
                                     <Label for="badge">Badge</Label>
-                                    <select
-                                        id="badge"
-                                        v-model="form.manga_badge_id"
-                                        class="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                                    >
-                                        <option :value="null">Chọn badge</option>
-                                        <option
-                                            v-for="badge in props.badges"
-                                            :key="badge.id"
-                                            :value="badge.id"
-                                        >
-                                            {{ badge.name }}
-                                        </option>
-                                    </select>
+                                    <Select id="badge" v-model="form.manga_badge_id" :options="[
+                                        { value: null, label: 'Chọn badge' },
+                                        ...props.badges.map((badge) => ({
+                                            value: badge.id,
+                                            label: badge.name,
+                                        })),
+                                    ]" />
                                 </div>
+
                             </CardContent>
                         </Card>
 

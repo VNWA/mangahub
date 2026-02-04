@@ -1,17 +1,17 @@
 <template>
-  <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+  <div class="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
     <!-- Header -->
     <div class="flex items-start justify-between mb-3">
       <div class="flex items-start gap-3 flex-1">
         <Avatar :src="comment.author.avatar" :alt="comment.author.name" size="sm" />
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
-            <p class="font-semibold text-slate-900 dark:text-white">{{ comment.author.name }}</p>
+            <p class="font-semibold text-zinc-900 dark:text-white">{{ comment.author.name }}</p>
             <span v-if="comment.author.verified" class="flex-shrink-0">
               <UIcon name="i-heroicons-check-badge" class="w-4 h-4 text-blue-500" />
             </span>
           </div>
-          <p class="text-xs text-slate-500 dark:text-slate-400">{{ formatDate(comment.createdAt) }}</p>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ formatDate(comment.createdAt) }}</p>
         </div>
       </div>
       <UDropdownMenu v-if="isAuthor" :items="dropdownItems" :popper="{ placement: 'bottom-end' }">
@@ -28,20 +28,20 @@
     </div>
 
     <!-- Content -->
-    <p class="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-3">{{ comment.content }}</p>
+    <p class="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed mb-3">{{ comment.content }}</p>
 
     <!-- Images -->
     <div v-if="comment.images && comment.images.length > 0" class="grid grid-cols-3 gap-2 mb-3">
       <Image v-for="(img, idx) in comment.images.slice(0, 3)" :key="idx" :src="img" container-class="h-20 rounded"
         hoverable />
       <div v-if="comment.images.length > 3"
-        class="h-20 rounded bg-gray-200 dark:bg-slate-700 flex items-center justify-center text-sm font-semibold text-slate-600">
+        class="h-20 rounded bg-gray-200 dark:bg-zinc-700 flex items-center justify-center text-sm font-semibold text-zinc-600">
         +{{ comment.images.length - 3 }}
       </div>
     </div>
 
     <!-- Actions -->
-    <div class="flex items-center gap-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-sm">
+    <div class="flex items-center gap-4 pt-3 border-t border-zinc-200 dark:border-zinc-700 text-sm">
       <UButton variant="ghost" color="neutral" icon="i-heroicons-hand-thumb-up" :label="`${comment.likes}`" size="xs" />
       <UButton variant="ghost" color="neutral" icon="i-heroicons-chat-bubble-left" :label="`${comment.replies}`"
         size="xs" />

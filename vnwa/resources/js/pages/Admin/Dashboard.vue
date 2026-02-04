@@ -43,6 +43,7 @@ interface Props {
         name: string;
         slug: string;
         avatar?: string;
+        avatar_url: string;
         status: string;
         total_views: number;
         author?: {
@@ -59,6 +60,7 @@ interface Props {
         name: string;
         slug: string;
         avatar?: string;
+        avatar_url: string;
         total_views: number;
         author?: {
             id: number;
@@ -223,7 +225,7 @@ const getStatusLabel = (status: string): string => {
                                 class="flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50 cursor-pointer">
                                 <div v-if="manga.avatar"
                                     class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-muted">
-                                    <img :src="manga.avatar" :alt="manga.name" class="h-full w-full object-cover" />
+                                    <img :src="manga.avatar_url" :alt="manga.name" class="h-full w-full object-cover" />
                                 </div>
                                 <div v-else
                                     class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-muted">
@@ -276,7 +278,7 @@ const getStatusLabel = (status: string): string => {
                                 </div>
                                 <div v-if="manga.avatar"
                                     class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border bg-muted">
-                                    <img :src="manga.avatar" :alt="manga.name" class="h-full w-full object-cover" />
+                                    <img :src="manga.avatar_url" :alt="manga.name" class="h-full w-full object-cover" />
                                 </div>
                                 <div v-else
                                     class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border bg-muted">

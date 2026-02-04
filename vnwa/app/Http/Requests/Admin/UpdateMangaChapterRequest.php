@@ -20,6 +20,8 @@ class UpdateMangaChapterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('manga_chapters')->ignore($chapterId)],
+            'coin_cost' => ['nullable', 'integer', 'min:0'],
+            'is_locked' => ['nullable', 'boolean'],
         ];
     }
 

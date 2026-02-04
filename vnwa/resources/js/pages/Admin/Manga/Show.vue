@@ -22,7 +22,6 @@ import mangas from '@/routes/mangas';
 import categories from '@/routes/categories';
 import authors from '@/routes/authors';
 import badges from '@/routes/badges';
-import { getStorageUrl } from '@/utils/storage';
 
 interface Props {
     manga: {
@@ -30,6 +29,7 @@ interface Props {
         name: string;
         slug: string;
         avatar?: string;
+        avatar_url: string;
         description?: string;
         status: string;
         total_views: number;
@@ -91,6 +91,7 @@ const statusColors: Record<string, string> = {
 </script>
 
 <template>
+
     <Head :title="manga.name" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
@@ -106,20 +107,13 @@ const statusColors: Record<string, string> = {
                 <div class="flex-1">
                     <div class="flex items-center gap-3">
                         <h1 class="text-3xl font-bold tracking-tight">{{ manga.name }}</h1>
-                        <Badge
-                            v-if="manga.badge"
-                            :style="{
-                                color: manga.badge.light_text_color,
-                                backgroundColor: manga.badge.light_bg_color,
-                            }"
-                            class="text-sm font-semibold"
-                        >
+                        <Badge v-if="manga.badge" :style="{
+                            color: manga.badge.light_text_color,
+                            backgroundColor: manga.badge.light_bg_color,
+                        }" class="text-sm font-semibold">
                             {{ manga.badge.name }}
                         </Badge>
-                        <Badge
-                            :class="statusColors[manga.status] || 'bg-gray-500'"
-                            class="text-white"
-                        >
+                        <Badge :class="statusColors[manga.status] || 'bg-gray-500'" class="text-white">
                             {{ statusLabels[manga.status] || manga.status }}
                         </Badge>
                     </div>
@@ -150,10 +144,8 @@ const statusColors: Record<string, string> = {
                                 <div>
                                     <p class="text-sm font-medium text-muted-foreground">Tác giả</p>
                                     <div v-if="manga.author" class="mt-1">
-                                        <Link
-                                            :href="authors.show(manga.author.id).url"
-                                            class="text-sm font-medium hover:underline flex items-center gap-1"
-                                        >
+                                        <Link :href="authors.show(manga.author.id).url"
+                                            class="text-sm font-medium hover:underline flex items-center gap-1">
                                             <User class="h-4 w-4" />
                                             {{ manga.author.name }}
                                         </Link>
@@ -215,11 +207,8 @@ const statusColors: Record<string, string> = {
                         </CardHeader>
                         <CardContent>
                             <div class="flex flex-wrap gap-2">
-                                <Link
-                                    v-for="category in manga.categories"
-                                    :key="category.id"
-                                    :href="categories.show(category.id).url"
-                                >
+                                <Link v-for="category in manga.categories" :key="category.id"
+                                    :href="categories.show(category.id).url">
                                     <Badge variant="outline" class="hover:bg-accent">
                                         {{ category.name }}
                                     </Badge>
@@ -249,11 +238,8 @@ const statusColors: Record<string, string> = {
                         </CardHeader>
                         <CardContent>
                             <div v-if="manga.chapters && manga.chapters.length > 0" class="space-y-2">
-                                <div
-                                    v-for="chapter in manga.chapters"
-                                    :key="chapter.id"
-                                    class="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors"
-                                >
+                                <div v-for="chapter in manga.chapters" :key="chapter.id"
+                                    class="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50 transition-colors">
                                     <div class="flex items-center gap-3">
                                         <span class="text-sm font-medium text-muted-foreground w-8">
                                             #{{ chapter.order }}
@@ -292,16 +278,10 @@ const statusColors: Record<string, string> = {
                     <Card>
                         <CardContent class="p-0">
                             <div v-if="manga.avatar" class="relative aspect-[3/4] w-full overflow-hidden rounded-lg">
-                                <img
-                                    :src="getStorageUrl(manga.avatar) || ''"
-                                    :alt="manga.name"
-                                    class="h-full w-full object-cover"
-                                />
+                                <img :src="manga.avatar_url" :alt="manga.name" class="h-full w-full object-cover" />
                             </div>
-                            <div
-                                v-else
-                                class="flex aspect-[3/4] w-full items-center justify-center rounded-lg border-2 border-dashed bg-muted"
-                            >
+                            <div v-else
+                                class="flex aspect-[3/4] w-full items-center justify-center rounded-lg border-2 border-dashed bg-muted">
                                 <BookOpen class="h-16 w-16 text-muted-foreground" />
                             </div>
                         </CardContent>

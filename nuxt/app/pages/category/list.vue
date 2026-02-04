@@ -11,18 +11,15 @@
     <!-- Categories Grid -->
     <section class="max-w-7xl mx-auto px-4 py-8 md:py-12">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-        <NuxtLink
-          v-for="category in categories"
-          :key="category.id"
-          :to="`/category/${category.id}`"
-          class="group relative bg-white dark:bg-slate-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all"
-        >
-          <div class="h-40 bg-gradient-to-br from-blue-500 to-purple-500 group-hover:from-blue-600 group-hover:to-purple-600 transition-colors flex items-center justify-center">
+        <NuxtLink v-for="category in categories" :key="category.id" :to="`/category/${category.id}`"
+          class="group relative bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all">
+          <div
+            class="h-40 bg-gradient-to-br from-blue-500 to-purple-500 group-hover:from-blue-600 group-hover:to-purple-600 transition-colors flex items-center justify-center">
             <UIcon :name="category.icon" class="w-16 h-16 text-white" />
           </div>
           <div class="p-4">
-            <h3 class="font-bold text-slate-900 dark:text-white mb-1">{{ category.name }}</h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">{{ category.count }} truyện</p>
+            <h3 class="font-bold text-zinc-900 dark:text-white mb-1">{{ category.name }}</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ category.count }} truyện</p>
           </div>
         </NuxtLink>
       </div>

@@ -101,6 +101,19 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user coin requests
+     */
+    public function coinRequests()
+    {
+        return $this->hasMany(CoinRequest::class)->orderBy('created_at', 'desc');
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(Report::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Get user chapter unlocks
      */
     public function chapterUnlocks()
@@ -119,13 +132,14 @@ class User extends Authenticatable
     /**
      * Add coin to user
      */
-    public function addCoin(int $amount, ?string $description = null, ?string $referenceType = null, ?int $referenceId = null): CoinTransaction
+    public function addCoin(int $amount, ?string $description = null, ?string $referenceType = null, ?int $referenceId = null, ?int $adminId = null): CoinTransaction
     {
         $this->increment('coin', $amount);
         $this->refresh();
 
         return CoinTransaction::create([
             'user_id' => $this->id,
+            'admin_id' => $adminId,
             'type' => 'deposit',
             'amount' => $amount,
             'description' => $description ?? 'Nạp coin',

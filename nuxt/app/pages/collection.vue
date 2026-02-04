@@ -22,71 +22,39 @@
         <div class="md:col-span-3">
           <!-- View Toggle -->
           <div class="flex items-center justify-between mb-8">
-            <div class="text-sm text-slate-600 dark:text-slate-400">
+            <div class="text-sm text-zinc-600 dark:text-zinc-400">
               Hiển thị {{ filteredComics.length }} kết quả
             </div>
             <div class="flex gap-2">
-              <UButton
-                icon="i-heroicons-list-bullet"
-                :color="viewMode === 'list' ? 'primary' : 'neutral'"
-                variant="ghost"
-                square
-                @click="viewMode = 'list'"
-              />
-              <UButton
-                icon="i-heroicons-square-3-stack-3d"
-                :color="viewMode === 'grid' ? 'primary' : 'neutral'"
-                variant="ghost"
-                square
-                @click="viewMode = 'grid'"
-              />
+              <UButton icon="i-heroicons-list-bullet" :color="viewMode === 'list' ? 'primary' : 'neutral'"
+                variant="ghost" square @click="viewMode = 'list'" />
+              <UButton icon="i-heroicons-square-3-stack-3d" :color="viewMode === 'grid' ? 'primary' : 'neutral'"
+                variant="ghost" square @click="viewMode = 'grid'" />
             </div>
           </div>
 
           <!-- Comics Display -->
-          <div
-            :class="[
-              'gap-6',
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                : 'space-y-4'
-            ]"
-          >
-            <ComicCardVariant
-              v-for="comic in paginatedComics"
-              :key="comic.id"
-              :comic="comic"
-              :variant="viewMode === 'grid' ? 'grid' : 'list'"
-            />
+          <div :class="[
+            'gap-6',
+            viewMode === 'grid'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+              : 'space-y-4'
+          ]">
+            <ComicCardVariant v-for="comic in paginatedComics" :key="comic.id" :comic="comic"
+              :variant="viewMode === 'grid' ? 'grid' : 'list'" />
           </div>
 
           <!-- Pagination -->
           <div class="flex items-center justify-center gap-2 mt-12">
-            <UButton
-              icon="i-heroicons-chevron-left"
-              color="neutral"
-              variant="ghost"
-              @click="currentPage = Math.max(1, currentPage - 1)"
-              :disabled="currentPage === 1"
-            />
+            <UButton icon="i-heroicons-chevron-left" color="neutral" variant="ghost"
+              @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1" />
             <div class="flex gap-1">
-              <UButton
-                v-for="page in totalPages"
-                :key="page"
-                :label="`${page}`"
-                :color="currentPage === page ? 'info' : 'neutral'"
-                :variant="currentPage === page ? 'soft' : 'ghost'"
-                size="sm"
-                @click="currentPage = page"
-              />
+              <UButton v-for="page in totalPages" :key="page" :label="`${page}`"
+                :color="currentPage === page ? 'info' : 'neutral'" :variant="currentPage === page ? 'soft' : 'ghost'"
+                size="sm" @click="currentPage = page" />
             </div>
-            <UButton
-              icon="i-heroicons-chevron-right"
-              color="neutral"
-              variant="ghost"
-              @click="currentPage = Math.min(totalPages, currentPage + 1)"
-              :disabled="currentPage === totalPages"
-            />
+            <UButton icon="i-heroicons-chevron-right" color="neutral" variant="ghost"
+              @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages" />
           </div>
         </div>
       </div>
@@ -95,6 +63,8 @@
 </template>
 
 <script setup lang="ts">
+import type { Manga } from '~/types'
+
 useHead({
   title: 'Bộ Sưu Tập Truyện - WebTruyện',
   meta: [
@@ -106,9 +76,10 @@ const viewMode = ref<'grid' | 'list'>('grid')
 const currentPage = ref(1)
 const itemsPerPage = 12
 
-const allComics = ref([
+const allComics = ref<Manga[]>([
   {
     id: '1',
+    slug: 'jujutsu-kaisen',
     title: 'Jujutsu Kaisen',
     author: 'Gege Akutami',
     thumbnail: 'https://via.placeholder.com/200x300?text=Jujutsu+Kaisen',
@@ -121,6 +92,7 @@ const allComics = ref([
   },
   {
     id: '2',
+    slug: 'one-piece',
     title: 'One Piece',
     author: 'Eiichiro Oda',
     thumbnail: 'https://via.placeholder.com/200x300?text=One+Piece',
@@ -133,6 +105,7 @@ const allComics = ref([
   },
   {
     id: '3',
+    slug: 'attack-on-titan',
     title: 'Attack on Titan',
     author: 'Hajime Isayama',
     thumbnail: 'https://via.placeholder.com/200x300?text=Attack+on+Titan',
@@ -145,6 +118,7 @@ const allComics = ref([
   },
   {
     id: '4',
+    slug: 'demon-slayer',
     title: 'Demon Slayer',
     author: 'Koyoharu Gotouge',
     thumbnail: 'https://via.placeholder.com/200x300?text=Demon+Slayer',
@@ -157,6 +131,7 @@ const allComics = ref([
   },
   {
     id: '5',
+    slug: 'my-hero-academia',
     title: 'My Hero Academia',
     author: 'Kohei Horikoshi',
     thumbnail: 'https://via.placeholder.com/200x300?text=My+Hero',
@@ -169,6 +144,7 @@ const allComics = ref([
   },
   {
     id: '6',
+    slug: 'tokyo-ghoul',
     title: 'Tokyo Ghoul',
     author: 'Sui Ishida',
     thumbnail: 'https://via.placeholder.com/200x300?text=Tokyo+Ghoul',

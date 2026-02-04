@@ -8,10 +8,10 @@ const props = defineProps<{
 
 <template>
   <UApp>
-    <UHeader />
+    <Header />
 
     <UError :error="error" />
 
-    <UFooter />
+    <Footer />
   </UApp>
 </template>

@@ -1,16 +1,10 @@
 <template>
   <div class="space-y-2">
-    <label v-if="label" class="text-sm font-semibold text-slate-900 dark:text-white">{{ label }}</label>
+    <label v-if="label" class="text-sm font-semibold text-zinc-900 dark:text-white">{{ label }}</label>
     <div class="flex flex-wrap gap-2">
-      <UButton
-        v-for="item in items"
-        :key="item.id"
-        :label="item.label"
+      <UButton v-for="item in items" :key="item.id" :label="item.label"
         :variant="selectedIds.includes(item.id) ? 'soft' : 'ghost'"
-        :color="selectedIds.includes(item.id) ? 'primary' : 'neutral'"
-        size="sm"
-        @click="toggleSelect(item.id)"
-      />
+        :color="selectedIds.includes(item.id) ? 'primary' : 'neutral'" size="sm" @click="toggleSelect(item.id)" />
     </div>
   </div>
 </template>

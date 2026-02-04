@@ -1,15 +1,15 @@
 <template>
   <div>
     <!-- Main Content -->
-    <main class="min-h-screen bg-white dark:bg-slate-900 py-8">
+    <div class="min-h-screen  py-8">
       <div class="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl">
         <!-- Breadcrumb -->
         <nav class="mb-8 flex items-center gap-2 text-sm">
-          <NuxtLink to="/" class="text-slate-600 dark:text-slate-400 hover:text-primary">
+          <NuxtLink to="/" class="text-zinc-600 dark:text-zinc-400 hover:text-primary">
             Trang chủ
           </NuxtLink>
-          <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-slate-400" />
-          <span class="text-slate-900 dark:text-white">Hồ sơ</span>
+          <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-zinc-400" />
+          <span class="text-zinc-900 dark:text-white">Hồ sơ</span>
         </nav>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -34,7 +34,7 @@
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 

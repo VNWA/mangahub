@@ -12,8 +12,8 @@
     <template #content>
       <div class="w-80 max-h-96 overflow-y-auto">
         <!-- Header -->
-        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-          <h3 class="font-semibold text-slate-900 dark:text-white">Thông báo</h3>
+        <div class="p-4 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+          <h3 class="font-semibold text-zinc-900 dark:text-white">Thông báo</h3>
           <UButton v-if="notifications.length > 0" variant="ghost" size="xs" @click="markAllAsRead"
             :disabled="unreadCount === 0">
             Đánh dấu đã đọc
@@ -23,19 +23,19 @@
         <!-- Notifications List -->
         <div v-if="loading" class="p-4 space-y-3">
           <div v-for="i in 3" :key="i" class="animate-pulse">
-            <div class="h-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+            <div class="h-16 bg-zinc-200 dark:bg-zinc-700 rounded"></div>
           </div>
         </div>
 
         <div v-else-if="notifications.length === 0" class="p-8 text-center">
-          <UIcon name="i-heroicons-bell-slash" class="w-12 h-12 text-slate-400 mx-auto mb-2" />
-          <p class="text-sm text-slate-600 dark:text-slate-400">Chưa có thông báo nào</p>
+          <UIcon name="i-heroicons-bell-slash" class="w-12 h-12 text-zinc-400 mx-auto mb-2" />
+          <p class="text-sm text-zinc-600 dark:text-zinc-400">Chưa có thông báo nào</p>
         </div>
 
-        <div v-else class="divide-y divide-slate-200 dark:divide-slate-700">
+        <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-700">
           <button v-for="notification in notifications" :key="notification.id"
             @click="handleNotificationClick(notification)" :class="[
-              'w-full p-4 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors',
+              'w-full p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors',
               !notification.read_at && 'bg-blue-50/50 dark:bg-blue-900/20'
             ]">
             <div class="flex gap-3">
@@ -46,13 +46,13 @@
                 ]" />
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-slate-900 dark:text-white mb-1">
+                <p class="text-sm font-medium text-zinc-900 dark:text-white mb-1">
                   {{ notification.title || 'Thông báo mới' }}
                 </p>
-                <p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
+                <p class="text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2">
                   {{ notification.message || notification.data?.message || '' }}
                 </p>
-                <p class="text-xs text-slate-500 mt-1">
+                <p class="text-xs text-zinc-500 mt-1">
                   {{ formatTime(notification.created_at) }}
                 </p>
               </div>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- Footer -->
-        <div v-if="notifications.length > 0" class="p-3 border-t border-slate-200 dark:border-slate-700">
+        <div v-if="notifications.length > 0" class="p-3 border-t border-zinc-200 dark:border-zinc-700">
           <UButton variant="ghost" color="primary" block @click="viewAllNotifications">
             Xem tất cả
           </UButton>

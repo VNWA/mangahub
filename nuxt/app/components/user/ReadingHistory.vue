@@ -3,43 +3,42 @@
     <!-- List View -->
     <div v-if="readingHistory.length > 0" class="space-y-3 max-h-96 overflow-y-auto">
       <NuxtLink v-for="item in readingHistory" :key="item.id" :to="`/${item.story.slug}/${item.lastChapterId}`"
-        class="bg-white dark:bg-slate-800 rounded-lg p-4 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors flex gap-4">
+        class="bg-white dark:bg-zinc-800 rounded-lg p-4 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors flex gap-4">
         <!-- Thumbnail -->
-        <img :src="item.story.coverImage" :alt="item.story.title"
-          class="w-16 h-20 object-cover rounded flex-shrink-0" />
+        <Image :src="item.story.avatar" :alt="item.story.title" container-class="w-16 h-20 rounded flex-shrink-0" />
 
         <div class="flex-1 min-w-0">
-          <h3 class="font-semibold text-slate-900 dark:text-white line-clamp-1">
+          <h3 class="font-semibold text-zinc-900 dark:text-white line-clamp-1">
             {{ item.story.title }}
           </h3>
-          <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
+          <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
             {{ item.story.author }}
           </p>
           <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-slate-400" />
-              <span class="text-xs text-slate-600 dark:text-slate-400">
+              <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-zinc-400" />
+              <span class="text-xs text-zinc-600 dark:text-zinc-400">
                 {{ item.lastChapterTitle }}
               </span>
             </div>
-            <span class="text-xs text-slate-500">{{ formatDate(item.lastRead) }}</span>
+            <span class="text-xs text-zinc-500">{{ formatDate(item.lastRead) }}</span>
           </div>
         </div>
 
         <!-- Progress Bar -->
         <!-- <div class="flex flex-col items-end justify-center">
-          <div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-600 rounded-full overflow-hidden">
+          <div class="w-12 h-1.5 bg-zinc-200 dark:bg-zinc-600 rounded-full overflow-hidden">
             <div class="h-full bg-primary transition-all" :style="{ width: `${item.progress}%` }"></div>
           </div>
-          <span class="text-xs text-slate-600 dark:text-slate-400 mt-1">{{ item.progress }}%</span>
+          <span class="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{{ item.progress }}%</span>
         </div> -->
       </NuxtLink>
     </div>
 
     <!-- Empty State -->
     <div v-else class="text-center py-8">
-      <UIcon name="i-heroicons-clock" class="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-      <p class="text-slate-600 dark:text-slate-400">Chưa có lịch sử đọc</p>
+      <UIcon name="i-heroicons-clock" class="w-12 h-12 text-zinc-300 dark:text-zinc-600 mx-auto mb-3" />
+      <p class="text-zinc-600 dark:text-zinc-400">Chưa có lịch sử đọc</p>
     </div>
   </div>
 </template>
@@ -52,7 +51,7 @@ interface ReadingHistoryItem {
     title: string
     slug: string
     author: string
-    coverImage: string
+    avatar: string
   }
   lastChapterId: string
   lastChapterTitle: string

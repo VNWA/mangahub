@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "nuxt",
   "type": "module",
   "private": true,
   "scripts": {

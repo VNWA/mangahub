@@ -1,75 +1,47 @@
 <template>
-  <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+  <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6">
     <div class="space-y-4">
       <!-- Main Search -->
-      <UInput
-        v-model="searchQuery"
-        icon="i-heroicons-magnifying-glass"
-        placeholder="Tìm truyện, tác giả, thể loại..."
-        @keyup.enter="search"
-        size="lg"
-      />
+      <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Tìm truyện, tác giả, thể loại..."
+        @keyup.enter="search" size="lg" />
 
       <!-- Filters (collapsible) -->
-      <div v-if="showFilters" class="space-y-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+      <div v-if="showFilters" class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
         <!-- Status Filter -->
         <div>
-          <label class="text-sm font-semibold text-slate-900 dark:text-white mb-2 block">Trạng thái</label>
+          <label class="text-sm font-semibold text-zinc-900 dark:text-white mb-2 block">Trạng thái</label>
           <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="status in statuses"
-              :key="status.id"
-              :label="status.name"
+            <UButton v-for="status in statuses" :key="status.id" :label="status.name"
               :color="selectedStatus === status.id ? 'primary' : 'neutral'"
-              :variant="selectedStatus === status.id ? 'soft' : 'ghost'"
-              size="sm"
-              @click="selectedStatus = status.id"
-            />
+              :variant="selectedStatus === status.id ? 'soft' : 'ghost'" size="sm"
+              @click="selectedStatus = status.id" />
           </div>
         </div>
 
         <!-- Sort Filter -->
         <div>
-          <label class="text-sm font-semibold text-slate-900 dark:text-white mb-2 block">Sắp xếp</label>
-          <USelect
-            v-model="selectedSort"
-            :options="sortOptions"
-            size="sm"
-          />
+          <label class="text-sm font-semibold text-zinc-900 dark:text-white mb-2 block">Sắp xếp</label>
+          <USelect v-model="selectedSort" :options="sortOptions" size="sm" />
         </div>
 
         <!-- Categories Filter -->
         <div>
-          <label class="text-sm font-semibold text-slate-900 dark:text-white mb-2 block">Thể loại</label>
+          <label class="text-sm font-semibold text-zinc-900 dark:text-white mb-2 block">Thể loại</label>
           <div class="flex flex-wrap gap-2">
-            <UButton
-              v-for="cat in categories"
-              :key="cat.id"
-              :label="cat.name"
+            <UButton v-for="cat in categories" :key="cat.id" :label="cat.name"
               :color="selectedCategories.includes(cat.id) ? 'primary' : 'neutral'"
-              :variant="selectedCategories.includes(cat.id) ? 'soft' : 'ghost'"
-              size="sm"
-              @click="toggleCategory(cat.id)"
-            />
+              :variant="selectedCategories.includes(cat.id) ? 'soft' : 'ghost'" size="sm"
+              @click="toggleCategory(cat.id)" />
           </div>
         </div>
       </div>
 
       <!-- Toggle Filters & Search Button -->
       <div class="flex gap-2">
-        <UButton
-          :icon="showFilters ? 'i-heroicons-funnel' : 'i-heroicons-funnel'"
-          :color="showFilters ? 'primary' : 'neutral'"
-          variant="ghost"
-          @click="showFilters = !showFilters"
-          label="Bộ lọc"
-        />
-        <UButton
-          color="primary"
-          class="flex-1"
-          label="Tìm kiếm"
-          @click="search"
-        />
+        <UButton :icon="showFilters ? 'i-heroicons-funnel' : 'i-heroicons-funnel'"
+          :color="showFilters ? 'primary' : 'neutral'" variant="ghost" @click="showFilters = !showFilters"
+          label="Bộ lọc" />
+        <UButton color="primary" class="flex-1" label="Tìm kiếm" @click="search" />
       </div>
     </div>
   </div>

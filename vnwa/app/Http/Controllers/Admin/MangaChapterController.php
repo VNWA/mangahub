@@ -7,11 +7,11 @@ use App\Http\Requests\Admin\ReorderMangaChapterRequest;
 use App\Http\Requests\Admin\StoreFromUrlsMangaChapterRequest;
 use App\Http\Requests\Admin\StoreMangaChapterRequest;
 use App\Http\Requests\Admin\UpdateMangaChapterRequest;
-use App\Http\Requests\Admin\UploadZipMangaChapterRequest;
 use App\Models\Manga;
 use App\Models\MangaChapter;
 use App\Models\MangaServer;
 use App\Models\ServerChapterContent;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,15 +19,16 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use RahulHaque\Filepond\Facades\Filepond;
 use ZipArchive;
 
 class MangaChapterController extends Controller
 {
     public function index(Request $request, Manga $manga): Response
     {
-        $chapters = $manga->chapters()
+        $chapters = MangaChapter::where('manga_id', $manga->id)
             ->with(['user:id,name', 'serverContents.server:id,name'])
-            ->orderBy('order')
+            ->orderBy('order', 'desc')
             ->get();
 
         $servers = MangaServer::orderBy('name')->get(['id', 'name']);
@@ -59,8 +60,16 @@ class MangaChapterController extends Controller
         ]);
     }
 
-    public function update(UpdateMangaChapterRequest $request, MangaChapter $chapter): JsonResponse
+    public function update(UpdateMangaChapterRequest $request, Manga $manga, MangaChapter $chapter): JsonResponse
     {
+        // Kiểm tra chapter thuộc về manga
+        if ($chapter->manga_id !== $manga->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chapter không thuộc về manga này.',
+            ], 422);
+        }
+
         $chapter->update($request->validated());
 
         // Update server contents if provided
@@ -129,33 +138,46 @@ class MangaChapterController extends Controller
         ]);
     }
 
-    public function destroy(MangaChapter $chapter): JsonResponse
+    public function destroy(Manga $manga, MangaChapter $chapter): JsonResponse
     {
-        // Xóa các file ảnh từ storage trước khi xóa chapter
-        $serverContents = $chapter->serverContents;
-        foreach ($serverContents as $content) {
+        // Kiểm tra chapter thuộc về manga
+        if ($chapter->manga_id !== $manga->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chapter không thuộc về manga này.',
+            ], 422);
+        }
+
+        // Load server contents trước khi xóa
+        $chapter->load('serverContents');
+
+        // Thu thập tất cả URLs từ server contents
+        $urls = [];
+        foreach ($chapter->serverContents as $content) {
             if (is_array($content->urls)) {
-                foreach ($content->urls as $url) {
-                    // Kiểm tra xem URL có phải là storage URL không
-                    $storagePath = $this->extractStoragePath($url);
-                    if ($storagePath && Storage::disk('public')->exists($storagePath)) {
-                        Storage::disk('public')->delete($storagePath);
-                    }
-                }
+                $urls = array_merge($urls, $content->urls);
             }
         }
 
-        // Xóa thư mục chapter nếu tồn tại
-        $chapterDir = 'mangas/'.$chapter->manga_id.'/chapters/'.$chapter->slug;
-        if (Storage::disk('public')->exists($chapterDir)) {
-            Storage::disk('public')->deleteDirectory($chapterDir);
+        $mangaId = $chapter->manga_id;
+        $chapterSlug = $chapter->slug;
+
+        // Xóa chapter (sẽ tự động xóa server contents do cascade)
+        $chapter->delete();
+
+        // Dispatch job để xóa ảnh bất đồng bộ
+        $directories = [];
+        if ($mangaId && $chapterSlug) {
+            $directories[] = "mangas/{$mangaId}/chapters/{$chapterSlug}";
         }
 
-        $chapter->delete();
+        if (! empty($urls) || ! empty($directories)) {
+            \App\Jobs\DeleteImageStorageJob::dispatch($urls, $directories);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Chapter đã được xóa thành công.',
+            'message' => 'Chapter đã được xóa thành công. Các file ảnh sẽ được xóa trong background.',
         ]);
     }
 
@@ -196,14 +218,167 @@ class MangaChapterController extends Controller
         ]);
     }
 
-    public function uploadZip(UploadZipMangaChapterRequest $request): JsonResponse
+    public function uploadZip(Request $request): JsonResponse
     {
-        try {
-            $zipFile = $request->file('zip_file');
-            $manga = Manga::findOrFail($request->manga_id);
+        $zipFile = $request->file('zip_file');
+        $folderName = 'salaries-'.Carbon::now()->format('F').'-'.rand(1000, 9999);
+        $zipFilePath = $zipFile->path();
+        Storage::makeDirectory($folderName);
+        Storage::put($folderName.'/'.$zipFile->getClientOriginalName(), file_get_contents($zipFile));
 
-            // Lấy tên chapter từ tên file (bỏ extension .zip)
-            $chapterName = pathinfo($zipFile->getClientOriginalName(), PATHINFO_FILENAME);
+        return response()->json([
+            'success' => true,
+            'message' => 'File đã được upload thành công.',
+            'file_path' => $zipFilePath,
+        ]);
+    }
+
+    /**
+     * Upload nhiều ZIP files từ FilePond serverIds
+     */
+    public function uploadMultipleZip(Request $request, Manga $manga): JsonResponse
+    {
+        $request->validate([
+            'server_ids' => ['required', 'array', 'min:1', 'max:10'],
+            'server_ids.*' => ['required', 'string'],
+        ]);
+
+        $storage = Storage::disk('minio');
+
+        $chapters = [];
+        $errors = [];
+        $serverIds = $request->input('server_ids', []);
+
+        // Lấy server đầu tiên hoặc tạo default server nếu chưa có
+        $server = MangaServer::orderBy('id')->first();
+        if (! $server) {
+            $server = MangaServer::create([
+                'name' => 'Server 1',
+                'description' => 'Default manga server',
+            ]);
+        }
+
+        // Lấy max order hiện tại
+        $maxOrder = $manga->chapters()->max('order') ?? 0;
+
+        foreach ($serverIds as $index => $serverId) {
+            $zipPath = null;
+            $uploadedFile = null;
+            try {
+                // Lấy file từ FilePond - FilePond đã lưu vào local disk temp
+                // getFile() trả về UploadedFile object
+                $uploadedFile = Filepond::field($serverId)->getFile();
+
+                if (! $uploadedFile || ! ($uploadedFile instanceof \Illuminate\Http\UploadedFile)) {
+                    $errors[] = "File #{$index}: Không thể lấy file từ FilePond với server_id: {$serverId}";
+                    \Log::error('FilePond getFile failed', [
+                        'server_id' => $serverId,
+                        'file_type' => gettype($uploadedFile),
+                    ]);
+
+                    continue;
+                }
+
+                // Lấy path từ UploadedFile object
+                // getRealPath() trả về đường dẫn tuyệt đối của file tạm
+                $zipPath = $uploadedFile->getRealPath();
+
+                if (! $zipPath) {
+                    // Fallback: lấy path từ getPathname()
+                    $zipPath = $uploadedFile->getPathname();
+                }
+
+                // Kiểm tra file có tồn tại không
+                if (! file_exists($zipPath)) {
+                    $errors[] = "File #{$index}: Không tìm thấy file tại: {$zipPath}";
+                    \Log::error('ZIP file not found', [
+                        'server_id' => $serverId,
+                        'zip_path' => $zipPath,
+                        'file_name' => $uploadedFile->getClientOriginalName(),
+                    ]);
+
+                    continue;
+                }
+
+                // Kiểm tra file có phải là ZIP không
+                $mimeType = mime_content_type($zipPath);
+                if (! is_file($zipPath) || ! in_array($mimeType, ['application/zip', 'application/x-zip-compressed'])) {
+                    $errors[] = "File #{$index}: File không phải là ZIP hợp lệ (mime: {$mimeType}).";
+                    \Log::warning('Invalid ZIP file', [
+                        'server_id' => $serverId,
+                        'zip_path' => $zipPath,
+                        'mime_type' => $mimeType,
+                    ]);
+
+                    continue;
+                }
+
+                // Lấy tên file ZIP gốc (bỏ extension)
+                $originalFileName = $uploadedFile->getClientOriginalName();
+                $zipFileName = pathinfo($originalFileName, PATHINFO_FILENAME);
+
+                // Process ZIP file
+                $result = $this->processZipFile($zipPath, $manga, $server, $storage, $maxOrder, $zipFileName);
+
+                if ($result['success']) {
+                    $chapters[] = $result['chapter'];
+                    $maxOrder = $result['chapter']->order;
+                } else {
+                    $errors[] = "File #{$index}: {$result['message']}";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "File #{$index}: {$e->getMessage()}";
+                \Log::error('Upload multiple ZIP error', [
+                    'server_id' => $serverId,
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'zip_path' => $zipPath ?? 'N/A',
+                ]);
+            } finally {
+                // Xóa file từ FilePond (sẽ tự xóa temp file)
+                try {
+                    Filepond::field($serverId)->delete();
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to delete FilePond temp file', [
+                        'server_id' => $serverId,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        if (empty($chapters) && ! empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể upload bất kỳ chapter nào.',
+                'errors' => $errors,
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã upload thành công '.count($chapters).' chapter(s).',
+            'chapters' => $chapters,
+            'errors' => $errors,
+        ]);
+    }
+
+    /**
+     * Process một ZIP file thành chapter
+     */
+    private function processZipFile(string $zipPath, Manga $manga, MangaServer $server, $storage, int $startOrder, ?string $zipFileName = null): array
+    {
+        $zip = null;
+        $uploadedFiles = [];
+
+        try {
+            // Lấy tên chapter từ tên file ZIP gốc (nếu có), nếu không thì lấy từ zipPath
+            if ($zipFileName) {
+                $chapterName = $zipFileName;
+            } else {
+                // Fallback: lấy từ tên file (bỏ extension .zip)
+                $chapterName = pathinfo(basename($zipPath), PATHINFO_FILENAME);
+            }
 
             // Tạo slug từ tên chapter
             $slug = Str::slug($chapterName);
@@ -216,29 +391,18 @@ class MangaChapterController extends Controller
 
             // Giải nén file ZIP
             $zip = new ZipArchive;
-            $zipPath = $zipFile->getRealPath();
-
             if ($zip->open($zipPath) !== true) {
-                return response()->json([
+                return [
                     'success' => false,
                     'message' => 'Không thể mở file ZIP.',
-                ], 422);
+                ];
             }
 
             // Tạo thư mục lưu trữ
             $storagePath = 'mangas/'.$manga->id.'/chapters/'.$uniqueSlug;
 
-            // Lấy server đầu tiên hoặc tạo default server nếu chưa có
-            $server = MangaServer::orderBy('id')->first();
-            if (! $server) {
-                $server = MangaServer::create([
-                    'name' => 'Server 1',
-                    'description' => 'Default manga server',
-                ]);
-            }
-
             // Giải nén và lưu ảnh
-            $imageUrls = [];
+            $imageFiles = [];
             $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
             for ($i = 0; $i < $zip->numFiles; $i++) {
@@ -255,41 +419,54 @@ class MangaChapterController extends Controller
                     continue;
                 }
 
-                // Lấy tên file
-                $basename = basename($filename);
-                $filePath = $storagePath.'/'.$basename;
+                // Lưu thông tin file với thứ tự
+                $imageFiles[] = [
+                    'index' => $i,
+                    'original_name' => $filename,
+                    'extension' => $ext,
+                ];
+            }
+
+            // Sắp xếp theo tên file gốc để giữ thứ tự
+            usort($imageFiles, function ($a, $b) {
+                return strnatcasecmp($a['original_name'], $b['original_name']);
+            });
+
+            $imageUrls = [];
+            foreach ($imageFiles as $fileInfo) {
+                // Tạo random name cho file để tránh trùng
+                $randomName = Str::random(40).'.'.$fileInfo['extension'];
+                $filePath = $storagePath.'/'.$randomName;
 
                 // Lưu file từ ZIP vào storage
-                $fileContent = $zip->getFromIndex($i);
-                Storage::disk('public')->put($filePath, $fileContent);
+                $fileContent = $zip->getFromIndex($fileInfo['index']);
+                $storage->put($filePath, $fileContent);
+                $uploadedFiles[] = $filePath;
 
                 // Lưu URL
-                $imageUrls[] = Storage::disk('public')->url($filePath);
+                $imageUrls[] = $filePath;
             }
 
             $zip->close();
+            $zip = null;
 
             if (empty($imageUrls)) {
-                // Xóa thư mục nếu không có ảnh
-                Storage::disk('public')->deleteDirectory($storagePath);
+                // Xóa các file đã upload nếu không có ảnh hợp lệ
+                $this->cleanupUploadedFiles($storage, $uploadedFiles, $storagePath);
 
-                return response()->json([
+                return [
                     'success' => false,
                     'message' => 'File ZIP không chứa ảnh hợp lệ.',
-                ], 422);
+                ];
             }
 
-            // Sắp xếp URLs theo tên file
-            sort($imageUrls);
-
             // Tạo chapter
-            $maxOrder = $manga->chapters()->max('order') ?? 0;
             $chapter = MangaChapter::create([
                 'manga_id' => $manga->id,
                 'user_id' => auth()->id(),
                 'name' => $chapterName,
                 'slug' => $uniqueSlug,
-                'order' => $maxOrder + 1,
+                'order' => $startOrder + 1,
             ]);
 
             // Tạo server chapter content
@@ -299,16 +476,53 @@ class MangaChapterController extends Controller
                 'urls' => $imageUrls,
             ]);
 
-            return response()->json([
+            return [
                 'success' => true,
-                'message' => 'Chapter đã được upload thành công từ file ZIP.',
                 'chapter' => $chapter->load(['user:id,name', 'serverContents.server:id,name']),
-            ]);
+            ];
         } catch (\Exception $e) {
-            return response()->json([
+            // Cleanup uploaded files nếu có lỗi
+            if (! empty($uploadedFiles)) {
+                $this->cleanupUploadedFiles($storage, $uploadedFiles, $storagePath ?? '');
+            }
+
+            return [
                 'success' => false,
-                'message' => 'Có lỗi xảy ra: '.$e->getMessage(),
-            ], 500);
+                'message' => $e->getMessage(),
+            ];
+        } finally {
+            // Đảm bảo ZIP được đóng
+            if ($zip !== null) {
+                @$zip->close();
+            }
+        }
+    }
+
+    /**
+     * Cleanup uploaded files khi có lỗi
+     */
+    private function cleanupUploadedFiles($storage, array $uploadedFiles, string $storagePath): void
+    {
+        try {
+            // Xóa từng file đã upload
+            foreach ($uploadedFiles as $filePath) {
+                try {
+                    $storage->delete($filePath);
+                } catch (\Exception $e) {
+                    // Ignore individual file deletion errors
+                }
+            }
+
+            // Với local storage, có thể xóa directory
+            // Với S3/MinIO, directory tự động xóa khi không còn file
+            // Kiểm tra xem có phải local disk không bằng cách thử deleteDirectory
+            try {
+                $storage->deleteDirectory($storagePath);
+            } catch (\Exception $e) {
+                // Ignore directory deletion errors (S3/MinIO không support deleteDirectory)
+            }
+        } catch (\Exception $e) {
+            // Ignore cleanup errors
         }
     }
 

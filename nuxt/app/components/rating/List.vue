@@ -3,20 +3,20 @@
         <!-- Loading State -->
         <div v-if="loading" class="space-y-4">
             <div v-for="i in 3" :key="i" class="animate-pulse">
-                <div class="bg-slate-200 dark:bg-slate-700 rounded-lg h-32"></div>
+                <div class="bg-zinc-200 dark:bg-zinc-700 rounded-lg h-32"></div>
             </div>
         </div>
 
         <!-- Empty State -->
         <div v-else-if="ratings.length === 0" class="text-center py-12">
-            <UIcon name="i-heroicons-star" class="w-12 h-12 text-slate-400 mx-auto mb-3" />
-            <p class="text-slate-600 dark:text-slate-400">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
+            <UIcon name="i-heroicons-star" class="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+            <p class="text-zinc-600 dark:text-zinc-400">Chưa có đánh giá nào. Hãy là người đầu tiên!</p>
         </div>
 
         <!-- Ratings List -->
         <div v-else class="space-y-4">
             <div v-for="rating in ratings" :key="rating.id"
-                class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm border border-slate-200 dark:border-slate-700">
+                class="bg-white dark:bg-zinc-800 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-700">
                 <div class="flex gap-3">
                     <!-- User Avatar -->
                     <UAvatar
@@ -27,7 +27,7 @@
                         <!-- User Name & Rating -->
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
-                                <span class="font-semibold text-slate-900 dark:text-white">
+                                <span class="font-semibold text-zinc-900 dark:text-white">
                                     {{ rating.user?.name || 'Anonymous' }}
                                 </span>
                                 <div class="flex gap-1">
@@ -35,21 +35,21 @@
                                         :name="i <= rating.rating ? 'i-heroicons-star-solid' : 'i-heroicons-star'"
                                         :class="[
                                             'w-4 h-4',
-                                            i <= rating.rating ? 'text-yellow-400' : 'text-slate-300 dark:text-slate-600'
+                                            i <= rating.rating ? 'text-yellow-400' : 'text-zinc-300 dark:text-zinc-600'
                                         ]" />
                                 </div>
                             </div>
-                            <span class="text-xs text-slate-500">
+                            <span class="text-xs text-zinc-500">
                                 {{ formatTime(rating.created_at) }}
                             </span>
                         </div>
 
                         <!-- Review Content -->
                         <div v-if="rating.review"
-                            class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap wrap-break-word">
+                            class="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap wrap-break-word">
                             {{ rating.review }}
                         </div>
-                        <div v-else class="text-sm text-slate-500 dark:text-slate-400 italic">
+                        <div v-else class="text-sm text-zinc-500 dark:text-zinc-400 italic">
                             Không có đánh giá chi tiết
                         </div>
                     </div>

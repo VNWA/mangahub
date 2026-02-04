@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Truyện yêu thích</h2>
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Truyện yêu thích</h2>
         <!-- <FavoriteList :favorites="favorites" @remove-favorite="removeFavorite" /> -->
     </div>
 </template>

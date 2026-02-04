@@ -1,7 +1,7 @@
 <template>
-  <div>
+  <div class="bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased">
     <Header />
-    <UMain>
+    <UMain class="lg:py-12 py-6">
       <slot />
     </UMain>
 
@@ -10,5 +10,5 @@
 </template>
 
 <script setup lang="ts">
-// Default layout with header and footer
+
 </script>

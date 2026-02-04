@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BadgeController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ChapterController;
 use App\Http\Controllers\Api\CoinController;
@@ -10,7 +11,6 @@ use App\Http\Controllers\Api\MangaController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\ReadingHistoryController;
-use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -29,7 +29,6 @@ Route::prefix('v1')->group(function () {
 
         if (! $user) {
 
-
             return response()->json([
                 'ok' => false,
                 'message' => 'Unauthenticated',
@@ -38,8 +37,6 @@ Route::prefix('v1')->group(function () {
 
         $channelName = $request->input('channel_name');
         $socketId = $request->input('socket_id');
-
-
 
         // Set the authenticated user for channel authorization
         // This is critical: Broadcast::auth() needs the user to be set in the auth context
@@ -52,115 +49,119 @@ Route::prefix('v1')->group(function () {
             // The user should now be available in the callbacks
             $response = Broadcast::auth($request);
 
-
             return $response;
         } catch (\Exception $e) {
-
 
             return response()->json([
                 'ok' => false,
                 'message' => 'Authorization failed: '.$e->getMessage(),
             ], 403);
         }
-    })->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, 'auth:sanctum')->name('broadcasting.auth');
+    })->middleware(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, 'auth:sanctum');
 
     // Authentication routes
-    Route::post('login', [AuthController::class, 'login'])->name('login');
-    Route::post('register', [AuthController::class, 'register'])->name('register');
-    Route::post('guest-login', [AuthController::class, 'guestLogin'])->name('guest.login');
-    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum')->name('logout');
+    Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('guest-login', [AuthController::class, 'guestLogin']);
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
     // Social authentication routes
-    Route::get('auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
-    Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
-    Route::get('auth/discord', [AuthController::class, 'redirectToDiscord'])->name('auth.discord');
-    Route::get('auth/discord/callback', [AuthController::class, 'handleDiscordCallback'])->name('auth.discord.callback');
+    Route::get('auth/google', [AuthController::class, 'redirectToGoogle']);
+    Route::get('auth/google/callback', [AuthController::class, 'handleGoogleCallback']);
+    Route::get('auth/discord', [AuthController::class, 'redirectToDiscord']);
+    Route::get('auth/discord/callback', [AuthController::class, 'handleDiscordCallback']);
+
+    // Search route (must be before mangas/{slug} to avoid conflict)
+    Route::get('/search', [MangaController::class, 'search']);
 
     // Manga routes
     Route::prefix('mangas')->group(function () {
-        Route::get('/', [MangaController::class, 'index'])->name('mangas.index');
-        Route::get('/top', [MangaController::class, 'top'])->name('mangas.top');
-        Route::get('/featured', [MangaController::class, 'featured'])->name('mangas.featured');
-        Route::get('/new', [MangaController::class, 'new'])->name('mangas.new');
-        Route::get('/hot', [MangaController::class, 'hot'])->name('mangas.hot');
-        Route::get('/completed', [MangaController::class, 'completed'])->name('mangas.completed');
-        Route::get('/{slug}', [MangaController::class, 'show'])->name('mangas.show');
+        Route::get('/', [MangaController::class, 'index']);
+        Route::get('/top', [MangaController::class, 'top']);
+        Route::get('/featured', [MangaController::class, 'featured']);
+        Route::get('/new', [MangaController::class, 'new']);
+        Route::get('/hot', [MangaController::class, 'hot']);
+        Route::get('/completed', [MangaController::class, 'completed']);
+        Route::get('/{slug}', [MangaController::class, 'show']);
     });
 
     // Chapter routes
     Route::prefix('mangas/{mangaSlug}/chapters')->group(function () {
-        Route::get('/', [ChapterController::class, 'index'])->name('chapters.index');
-        Route::get('/{chapterSlug}', [ChapterController::class, 'show'])->name('chapters.show');
+        Route::get('/', [ChapterController::class, 'index']);
+        Route::get('/{chapterSlug}', [ChapterController::class, 'show']);
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('/{chapterSlug}/report', [ChapterController::class, 'report']);
+        });
     });
 
     // Category routes
     Route::prefix('categories')->group(function () {
-        Route::get('/', [CategoryController::class, 'index'])->name('categories.index');
-        Route::get('/{slug}', [CategoryController::class, 'show'])->name('categories.show');
+        Route::get('/', [CategoryController::class, 'index']);
+        Route::get('/{slug}', [CategoryController::class, 'show']);
     });
-
-    // Search routes
-    Route::get('/search', [SearchController::class, 'index'])->name('search.index');
+    Route::prefix('badges')->controller(BadgeController::class)->group(function () {
+        Route::get('/', 'index');
+    });
 
     // Comments routes (public read, protected write)
     Route::prefix('comments')->group(function () {
-        Route::get('/', [CommentController::class, 'index'])->name('comments.index');
+        Route::get('/', [CommentController::class, 'index']);
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', [CommentController::class, 'store'])->name('comments.store');
-            Route::put('/{comment}', [CommentController::class, 'update'])->name('comments.update');
-            Route::delete('/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-            Route::post('/{comment}/react', [CommentController::class, 'react'])->name('comments.react');
+            Route::post('/', [CommentController::class, 'store']);
+            Route::put('/{comment}', [CommentController::class, 'update']);
+            Route::delete('/{comment}', [CommentController::class, 'destroy']);
+            Route::post('/{comment}/react', [CommentController::class, 'react']);
         });
     });
 
     // Rating routes
     Route::prefix('mangas/{mangaId}/rating')->group(function () {
-        Route::get('/', [RatingController::class, 'show'])->name('ratings.show');
-        Route::get('/list', [RatingController::class, 'index'])->name('ratings.index');
+        Route::get('/', [RatingController::class, 'show']);
+        Route::get('/list', [RatingController::class, 'index']);
         Route::middleware('auth:sanctum')->group(function () {
-            Route::post('/', [RatingController::class, 'store'])->name('ratings.store');
-            Route::delete('/', [RatingController::class, 'destroy'])->name('ratings.destroy');
+            Route::post('/', [RatingController::class, 'store']);
+            Route::delete('/', [RatingController::class, 'destroy']);
         });
     });
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('user', [AuthController::class, 'user'])->name('user');
-        Route::post('sync-data', [AuthController::class, 'syncData'])->name('sync.data');
-        Route::post('devices/disconnect', [AuthController::class, 'deviceDisconnect'])->name('devices.disconnect');
-        Route::put('profile', [AuthController::class, 'updateProfile'])->name('profile.update');
-        Route::put('settings', [AuthController::class, 'updateSettings'])->name('settings.update');
+        Route::get('user', [AuthController::class, 'user']);
+        Route::post('sync-data', [AuthController::class, 'syncData']);
+        Route::post('devices/disconnect', [AuthController::class, 'deviceDisconnect']);
+        Route::put('profile', [AuthController::class, 'updateProfile']);
+        Route::put('settings', [AuthController::class, 'updateSettings']);
 
         // Favorites
         Route::prefix('favorites')->group(function () {
-            Route::get('/', [FavoriteController::class, 'index'])->name('favorites.index');
-            Route::post('/', [FavoriteController::class, 'store'])->name('favorites.store');
-            Route::delete('/{mangaId}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
-            Route::get('/check/{mangaId}', [FavoriteController::class, 'check'])->name('favorites.check');
+            Route::get('/', [FavoriteController::class, 'index']);
+            Route::post('/', [FavoriteController::class, 'store']);
+            Route::delete('/{mangaId}', [FavoriteController::class, 'destroy']);
+            Route::get('/check/{mangaId}', [FavoriteController::class, 'check']);
         });
 
         // Reading History
         Route::prefix('reading-history')->group(function () {
-            Route::get('/', [ReadingHistoryController::class, 'index'])->name('reading-history.index');
-            Route::post('/', [ReadingHistoryController::class, 'store'])->name('reading-history.store');
-            Route::delete('/', [ReadingHistoryController::class, 'destroy'])->name('reading-history.destroy');
+            Route::get('/', [ReadingHistoryController::class, 'index']);
+            Route::post('/', [ReadingHistoryController::class, 'store']);
+            Route::delete('/', [ReadingHistoryController::class, 'destroy']);
         });
 
         // Notifications
         Route::prefix('notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'index'])->name('notifications.index');
-            Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
-            Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
-            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
         });
 
         // Coin routes
         Route::prefix('coins')->group(function () {
-            Route::get('/balance', [CoinController::class, 'balance'])->name('coins.balance');
-            Route::post('/deposit', [CoinController::class, 'deposit'])->name('coins.deposit');
-            Route::get('/transactions', [CoinController::class, 'transactions'])->name('coins.transactions');
-            Route::post('/unlock-chapter', [CoinController::class, 'unlockChapter'])->name('coins.unlock-chapter');
-            Route::get('/unlock-history', [CoinController::class, 'unlockHistory'])->name('coins.unlock-history');
+            Route::get('/balance', [CoinController::class, 'balance']);
+            Route::post('/deposit', [CoinController::class, 'deposit']);
+            Route::get('/transactions', [CoinController::class, 'transactions']);
+            Route::post('/unlock-chapter', [CoinController::class, 'unlockChapter']);
+            Route::get('/unlock-history', [CoinController::class, 'unlockHistory']);
         });
     });
 });

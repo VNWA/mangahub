@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Manga;
 use App\Models\MangaChapter;
+use App\Models\Report;
 use App\Models\ServerChapterContent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -74,16 +75,31 @@ class ChapterController extends Controller
             ->orderBy('order', 'asc')
             ->first(['id', 'name', 'slug', 'order']);
 
-        // Get content from first available server
+        // Get all available servers
+        $availableServers = ServerChapterContent::where('manga_chapter_id', $chapter->id)
+            ->with('server:id,name')
+            ->get()
+            ->map(fn ($sc) => [
+                'id' => $sc->manga_server_id,
+                'name' => $sc->server->name ?? 'Unknown',
+            ])
+            ->values();
+
+        // Get content from requested server or first available
         $serverId = $request->query('server_id');
         $serverContent = null;
 
         if ($serverId) {
             $serverContent = ServerChapterContent::where('manga_chapter_id', $chapter->id)
                 ->where('manga_server_id', $serverId)
+                ->with('server:id,name')
                 ->first();
-        } else {
+        }
+
+        // Fallback to first available server if requested server not found
+        if (! $serverContent && $availableServers->isNotEmpty()) {
             $serverContent = ServerChapterContent::where('manga_chapter_id', $chapter->id)
+                ->where('manga_server_id', $availableServers->first()['id'])
                 ->with('server:id,name')
                 ->first();
         }
@@ -94,7 +110,7 @@ class ChapterController extends Controller
             $content = [
                 'server_id' => $serverContent->manga_server_id,
                 'server_name' => $serverContent->server->name ?? null,
-                'images' => json_decode($serverContent->images ?? '[]', true),
+                'images' => $serverContent->urls,
                 'content' => $serverContent->content,
             ];
         }
@@ -135,16 +151,66 @@ class ChapterController extends Controller
                     'order' => $nextChapter->order,
                 ] : null,
                 'content' => $content,
-                'available_servers' => ServerChapterContent::where('manga_chapter_id', $chapter->id)
-                    ->with('server:id,name')
-                    ->get()
-                    ->map(fn ($sc) => [
-                        'id' => $sc->manga_server_id,
-                        'name' => $sc->server->name ?? 'Unknown',
-                    ]),
+                'available_servers' => $availableServers,
                 'created_at' => $chapter->created_at?->toISOString(),
                 'updated_at' => $chapter->updated_at?->toISOString(),
             ],
         ]);
+    }
+
+    /**
+     * Report a chapter
+     */
+    public function report(Request $request, string $mangaSlug, string $chapterSlug): JsonResponse
+    {
+        $user = $request->user();
+        if (! $user) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
+        }
+
+        $manga = Manga::where('slug', $mangaSlug)->firstOrFail();
+        $chapter = MangaChapter::where('manga_id', $manga->id)
+            ->where('slug', $chapterSlug)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'reason' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        // Check if user already reported this chapter
+        $existingReport = Report::where('user_id', $user->id)
+            ->where('reportable_type', 'MangaChapter')
+            ->where('reportable_id', $chapter->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingReport) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Bạn đã báo cáo chapter này rồi. Vui lòng chờ xử lý.',
+            ], 422);
+        }
+
+        $report = Report::create([
+            'user_id' => $user->id,
+            'reportable_type' => 'MangaChapter',
+            'reportable_id' => $chapter->id,
+            'reason' => $validated['reason'],
+            'description' => $validated['description'] ?? null,
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Báo cáo đã được gửi thành công. Cảm ơn bạn đã phản hồi!',
+            'data' => [
+                'id' => $report->id,
+                'status' => $report->status,
+            ],
+        ], 201);
     }
 }

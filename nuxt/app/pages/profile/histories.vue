@@ -1,51 +1,43 @@
 <template>
   <div class="space-y-6">
-    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Lịch sử đọc</h2>
+    <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Lịch sử đọc</h2>
 
     <div v-if="loading" class="space-y-4">
       <div v-for="i in 5" :key="i" class="animate-pulse">
-        <div class="h-24 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
+        <div class="h-24 bg-zinc-200 dark:bg-zinc-700 rounded-lg"></div>
       </div>
     </div>
 
     <div v-else-if="readingHistory.length === 0" class="text-center py-12">
-      <UIcon name="i-heroicons-clock" class="w-12 h-12 text-slate-400 mx-auto mb-3" />
-      <p class="text-slate-600 dark:text-slate-400">Chưa có lịch sử đọc</p>
+      <UIcon name="i-heroicons-clock" class="w-12 h-12 text-zinc-400 mx-auto mb-3" />
+      <p class="text-zinc-600 dark:text-zinc-400">Chưa có lịch sử đọc</p>
     </div>
 
     <div v-else class="space-y-3">
-      <div
-        v-for="item in readingHistory"
-        :key="item.id"
-        class="bg-white dark:bg-slate-800 rounded-lg p-4 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-      >
-        <NuxtLink
-          :to="item.chapter ? `/${item.manga.slug}/${item.chapter.slug}` : `/${item.manga.slug}`"
-          class="flex gap-4"
-        >
+      <div v-for="item in readingHistory" :key="item.id"
+        class="bg-white dark:bg-zinc-800 rounded-lg p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors">
+        <NuxtLink :to="item.chapter ? `/${item.manga.slug}/${item.chapter.slug}` : `/${item.manga.slug}`"
+          class="flex gap-4">
           <!-- Thumbnail -->
-          <img
-            :src="item.manga.avatar || item.manga.coverImage || 'https://via.placeholder.com/80x100'"
-            :alt="item.manga.name"
-            class="w-16 h-20 object-cover rounded flex-shrink-0"
-          />
+          <Image :src="item.manga.avatar || 'https://via.placeholder.com/80x100'" :alt="item.manga.name"
+            container-class="w-16 h-20 rounded flex-shrink-0" />
 
           <!-- Content -->
           <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-slate-900 dark:text-white line-clamp-1 mb-1">
+            <h3 class="font-semibold text-zinc-900 dark:text-white line-clamp-1 mb-1">
               {{ item.manga.name }}
             </h3>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">
+            <p class="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
               {{ item.manga.author?.name || 'Chưa có tác giả' }}
             </p>
             <div class="flex items-center justify-between gap-2">
               <div class="flex items-center gap-2">
-                <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-slate-400" />
-                <span class="text-xs text-slate-600 dark:text-slate-400">
+                <UIcon name="i-heroicons-document-text" class="w-4 h-4 text-zinc-400" />
+                <span class="text-xs text-zinc-600 dark:text-zinc-400">
                   {{ item.chapter?.name || item.chapter_name || 'Chưa đọc' }}
                 </span>
               </div>
-              <span class="text-xs text-slate-500">{{ formatDate(item.last_read_at) }}</span>
+              <span class="text-xs text-zinc-500">{{ formatDate(item.last_read_at) }}</span>
             </div>
           </div>
         </NuxtLink>
@@ -85,7 +77,6 @@ const loadHistory = async () => {
           name: string
           slug: string
           avatar?: string
-          coverImage?: string
           author?: {
             name: string
           }

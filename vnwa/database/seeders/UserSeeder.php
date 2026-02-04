@@ -21,10 +21,12 @@ class UserSeeder extends Seeder
             'password' => Hash::make('admin@123'),
         ]);
         $admin->assignRole($admin_role);
-        User::factory()->create([
+        $userRole = Role::create(['name' => 'user']);
+        $user = User::factory()->create([
             'name' => 'Regular User',
             'email' => 'user@vinawebapp.com',
             'password' => Hash::make('user@123'),
         ]);
+        $user->assignRole($userRole);
     }
 }

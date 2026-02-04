@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ModalGuestLogin } from '#components'
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
@@ -10,10 +11,9 @@ useSeoMeta({
 const toast = useToast()
 const auth = useAuthStore()
 const router = useRouter()
+const overlay = useOverlay()
 const loading = ref(false)
 const guestLoading = ref(false)
-const showGuestModal = ref(false)
-const guestName = ref('')
 
 const fields = [{
   name: 'email',
@@ -65,7 +65,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
         color: 'success',
         icon: 'i-heroicons-check-circle'
       })
-      
+
       // Redirect to home or intended page
       const redirect = router.currentRoute.value.query.redirect as string
       await router.push(redirect || '/')
@@ -143,17 +143,7 @@ async function handleDiscordLogin() {
   }
 }
 
-async function handleGuestLogin() {
-  if (!guestName.value || guestName.value.trim().length === 0) {
-    toast.add({
-      title: 'Lỗi',
-      description: 'Vui lòng nhập tên của bạn',
-      color: 'error',
-      icon: 'i-heroicons-exclamation-triangle'
-    })
-    return
-  }
-
+async function handleGuestLogin(name: string) {
   guestLoading.value = true
   try {
     const data = await $http<{
@@ -164,7 +154,7 @@ async function handleGuestLogin() {
     }>('/guest-login', {
       method: 'POST',
       body: {
-        name: guestName.value.trim()
+        name: name.trim()
       }
     })
 
@@ -176,10 +166,7 @@ async function handleGuestLogin() {
         color: 'success',
         icon: 'i-heroicons-check-circle'
       })
-      
-      showGuestModal.value = false
-      guestName.value = ''
-      
+
       // Redirect to home
       await router.push('/')
     }
@@ -196,6 +183,14 @@ async function handleGuestLogin() {
   }
 }
 
+const showGuestModal = () => {
+  const modal = overlay.create(ModalGuestLogin)
+  modal.open({
+    onLogin: handleGuestLogin,
+    onClose: () => modal.close()
+  })
+}
+
 const providers = [{
   label: 'Google',
   icon: 'i-simple-icons-google',
@@ -210,14 +205,8 @@ const providers = [{
 <template>
   <div class="flex flex-col items-center justify-center gap-4 p-4 min-h-screen">
     <UPageCard class="w-full max-w-md">
-      <UAuthForm 
-        :loading="loading" 
-        :fields="fields" 
-        :schema="schema" 
-        :providers="providers" 
-        title="Chào mừng trở lại"
-        icon="i-lucide-lock" 
-        @submit="onSubmit">
+      <UAuthForm :loading="loading" :fields="fields" :schema="schema" :providers="providers" title="Chào mừng trở lại"
+        icon="i-lucide-lock" @submit="onSubmit">
         <template #description>
           Chưa có tài khoản? <ULink to="/auth/register" class="text-primary font-medium">Đăng ký ngay</ULink>.
         </template>
@@ -227,68 +216,21 @@ const providers = [{
         </template>
 
         <template #footer>
-          Bằng việc đăng nhập, bạn đồng ý với <ULink to="/" class="text-primary font-medium">Điều khoản dịch vụ</ULink> của chúng tôi.
+          Bằng việc đăng nhập, bạn đồng ý với <ULink to="/" class="text-primary font-medium">Điều khoản dịch vụ</ULink>
+          của chúng tôi.
         </template>
       </UAuthForm>
 
       <!-- Guest Login -->
-      <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+      <div class="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
         <div class="text-center mb-3">
-          <p class="text-sm text-slate-600 dark:text-slate-400">Hoặc</p>
+          <p class="text-sm text-zinc-600 dark:text-zinc-400">Hoặc</p>
         </div>
-        <UButton
-          @click="showGuestModal = true"
-          variant="outline"
-          color="neutral"
-          block
-          :loading="guestLoading"
-        >
+        <UButton @click="showGuestModal()" variant="outline" color="neutral" block :loading="guestLoading">
           <UIcon name="i-heroicons-user" class="w-4 h-4 mr-2" />
           Đăng nhập Guest (Chỉ cần tên)
         </UButton>
       </div>
     </UPageCard>
-
-    <!-- Guest Login Modal -->
-    <UModal v-model="showGuestModal">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">Đăng nhập Guest</h3>
-        </template>
-
-        <div class="space-y-4">
-          <p class="text-sm text-slate-600 dark:text-slate-400">
-            Chỉ cần nhập tên của bạn để bắt đầu đọc truyện. Tài khoản guest sẽ tự động bị xóa sau 30 ngày.
-          </p>
-          
-          <UInput
-            v-model="guestName"
-            label="Tên của bạn"
-            placeholder="Nhập tên"
-            :disabled="guestLoading"
-          />
-
-          <div class="flex gap-2">
-            <UButton
-              @click="handleGuestLogin"
-              color="primary"
-              block
-              :loading="guestLoading"
-              :disabled="!guestName || guestName.trim().length === 0"
-            >
-              Đăng nhập
-            </UButton>
-            <UButton
-              @click="showGuestModal = false"
-              variant="ghost"
-              color="neutral"
-              :disabled="guestLoading"
-            >
-              Hủy
-            </UButton>
-          </div>
-        </div>
-      </UCard>
-    </UModal>
   </div>
 </template>

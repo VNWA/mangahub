@@ -1,13 +1,13 @@
 <template>
-  <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 text-center">
+  <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 text-center">
     <!-- Avatar -->
     <div class="mb-4">
       <img :src="user.avatar ?? ''" :alt="user.name" class="w-20 h-20 rounded-full mx-auto border-4 border-primary" />
     </div>
 
     <!-- User Info -->
-    <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ user.name }}</h2>
-    <p class="text-slate-600 dark:text-slate-400 text-sm mb-4">{{ user.email }}</p>
+    <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">{{ user.name }}</h2>
+    <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-4">{{ user.email }}</p>
 
     <!-- Coin Balance -->
     <div class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
@@ -20,18 +20,18 @@
     </div>
 
     <!-- Stats -->
-    <!-- <div class="grid grid-cols-3 gap-4 mb-6 py-4 border-y border-slate-200 dark:border-slate-700">
+    <!-- <div class="grid grid-cols-3 gap-4 mb-6 py-4 border-y border-zinc-200 dark:border-zinc-700">
       <div>
         <div class="text-2xl font-bold text-primary">{{ user.favorites?.length ?? 0 }}</div>
-        <p class="text-xs text-slate-600 dark:text-slate-400">Yêu thích</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Yêu thích</p>
       </div>
       <div>
         <div class="text-2xl font-bold text-primary">{{ user.readingHistory?.length ?? 0 }}</div>
-        <p class="text-xs text-slate-600 dark:text-slate-400">Đang đọc</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Đang đọc</p>
       </div>
       <div>
         <div class="text-2xl font-bold text-primary">{{ user.followers?.length ?? 0 }}</div>
-        <p class="text-xs text-slate-600 dark:text-slate-400">Theo dõi</p>
+        <p class="text-xs text-zinc-600 dark:text-zinc-400">Theo dõi</p>
       </div>
     </div> -->
 
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Member Since -->
-    <p class="text-xs text-slate-600 dark:text-slate-400 mt-4">
+    <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-4">
       Tham gia: {{ user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN', {
         year: 'numeric',
         month: 'long',

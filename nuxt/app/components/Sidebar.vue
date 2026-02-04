@@ -1,14 +1,12 @@
 <template>
-  <aside class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6">
+  <aside class="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6">
     <!-- Categories -->
     <div class="mb-8">
-      <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Thể loại</h3>
+      <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4">Thể loại</h3>
       <ul class="space-y-2">
         <li v-for="category in categories" :key="category">
-          <NuxtLink
-            :to="`/category/${category.id}`"
-            class="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
+          <NuxtLink :to="`/category/${category.id}`"
+            class="text-zinc-700 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {{ category.name }}
           </NuxtLink>
         </li>
@@ -17,25 +15,18 @@
 
     <!-- Hot Comics -->
     <div class="mb-8">
-      <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Truyện Hot</h3>
+      <h3 class="text-lg font-bold text-zinc-900 dark:text-white mb-4">Truyện Hot</h3>
       <ul class="space-y-3">
         <li v-for="comic in hotComics" :key="comic.id" class="flex gap-3">
-          <img
-            v-if="comic.thumbnail"
-            :src="comic.thumbnail"
-            :alt="comic.title"
-            class="w-12 h-16 rounded object-cover"
-          />
+          <Image v-if="comic.avatar" :src="comic.avatar" :alt="comic.title" container-class="w-12 h-16 rounded" />
           <div class="flex-1">
-            <NuxtLink
-              :to="`/comic/${comic.id}`"
-              class="text-sm font-semibold text-slate-900 dark:text-white hover:text-blue-600 line-clamp-2"
-            >
+            <NuxtLink :to="`/comic/${comic.id}`"
+              class="text-sm font-semibold text-zinc-900 dark:text-white hover:text-blue-600 line-clamp-2">
               {{ comic.title }}
             </NuxtLink>
             <div class="flex items-center gap-1 mt-1">
               <UIcon name="i-heroicons-star" class="w-4 h-4 text-yellow-500" />
-              <span class="text-xs text-slate-600 dark:text-slate-400">{{ comic.rating }}</span>
+              <span class="text-xs text-zinc-600 dark:text-zinc-400">{{ comic.rating }}</span>
             </div>
           </div>
         </li>
@@ -65,19 +56,19 @@ const hotComics = ref([
   {
     id: '1',
     title: 'Tên truyện hot nhất',
-    thumbnail: 'https://via.placeholder.com/50x70',
+    avatar: 'https://via.placeholder.com/50x70',
     rating: '9.5'
   },
   {
     id: '2',
     title: 'Truyện hay thứ hai',
-    thumbnail: 'https://via.placeholder.com/50x70',
+    avatar: 'https://via.placeholder.com/50x70',
     rating: '9.3'
   },
   {
     id: '3',
     title: 'Truyện phổ biến',
-    thumbnail: 'https://via.placeholder.com/50x70',
+    avatar: 'https://via.placeholder.com/50x70',
     rating: '9.1'
   }
 ])

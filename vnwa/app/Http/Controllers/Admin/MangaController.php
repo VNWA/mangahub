@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\Image as ImageHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMangaRequest;
 use App\Http\Requests\Admin\UpdateMangaRequest;
+use App\Jobs\DeleteImageStorageJob;
 use App\Models\Manga;
 use App\Models\MangaAuthor;
 use App\Models\MangaBadge;
@@ -12,6 +14,7 @@ use App\Models\MangaCategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,7 +72,7 @@ class MangaController extends Controller
         $data['user_id'] = auth()->id();
 
         if ($request->hasFile('avatar')) {
-            $data['avatar'] = $request->file('avatar')->store('mangas/avatars', 'public');
+            $data['avatar'] = $this->storeResizedAvatar($request->file('avatar'));
         }
 
         $manga = Manga::create($data);
@@ -111,10 +114,16 @@ class MangaController extends Controller
         $data = $request->validated();
 
         if ($request->hasFile('avatar')) {
-            if ($manga->avatar) {
-                Storage::disk('public')->delete($manga->avatar);
+            // Lưu avatar cũ để xóa sau
+            $oldAvatar = $manga->avatar;
+
+            // Upload avatar mới (resize theo config + random name)
+            $data['avatar'] = $this->storeResizedAvatar($request->file('avatar'));
+
+            // Xóa avatar cũ bằng job
+            if ($oldAvatar) {
+                DeleteImageStorageJob::dispatch([$oldAvatar], []);
             }
-            $data['avatar'] = $request->file('avatar')->store('mangas/avatars', 'public');
         }
 
         $manga->update($data);
@@ -131,45 +140,40 @@ class MangaController extends Controller
 
     public function destroy(Manga $manga): RedirectResponse
     {
-        // Xóa avatar nếu có
+        // Thu thập tất cả URLs từ chapters và avatar
+        $urls = [];
+
+        // Thêm avatar nếu có
         if ($manga->avatar) {
-            $avatarPath = $this->extractStoragePath($manga->avatar);
-            if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
-                Storage::disk('public')->delete($avatarPath);
-            }
+            $urls[] = $manga->avatar;
         }
 
-        // Xóa tất cả chapters và ảnh liên quan
+        // Thu thập URLs từ tất cả chapters
         foreach ($manga->chapters as $chapter) {
-            // Xóa server contents và ảnh
             foreach ($chapter->serverContents as $content) {
                 if (is_array($content->urls)) {
-                    foreach ($content->urls as $url) {
-                        $storagePath = $this->extractStoragePath($url);
-                        if ($storagePath && Storage::disk('public')->exists($storagePath)) {
-                            Storage::disk('public')->delete($storagePath);
-                        }
-                    }
-                }
-            }
-
-            // Xóa thư mục chapter
-            $chapterDir = 'mangas/'.$manga->id.'/chapters/'.$chapter->slug;
-            if (Storage::disk('public')->exists($chapterDir)) {
-                Storage::disk('public')->deleteDirectory($chapterDir);
+                    $urls = array_merge($urls, $content->urls);
             }
         }
-
-        // Xóa thư mục manga nếu tồn tại
-        $mangaDir = 'mangas/'.$manga->id;
-        if (Storage::disk('public')->exists($mangaDir)) {
-            Storage::disk('public')->deleteDirectory($mangaDir);
         }
 
+        $mangaId = $manga->id;
+
+        // Xóa manga trước
         $manga->delete();
 
+        // Thu thập các thư mục cần xóa
+        $directories = [];
+        foreach ($manga->chapters as $chapter) {
+            $directories[] = "mangas/{$mangaId}/chapters/{$chapter->slug}";
+        }
+        $directories[] = "mangas/{$mangaId}";
+
+        // Dispatch job để xóa ảnh bất đồng bộ
+        \App\Jobs\DeleteImageStorageJob::dispatch($urls, $directories);
+
         return redirect()->route('mangas.index')
-            ->with('success', 'Manga đã được xóa thành công.');
+            ->with('success', 'Manga đã được xóa thành công. Các file ảnh sẽ được xóa trong background.');
     }
 
     /**
@@ -192,5 +196,54 @@ class MangaController extends Controller
         }
 
         return null;
+    }
+
+    private function storeResizedAvatar(\Illuminate\Http\UploadedFile $file): string
+    {
+        $avatarConfig = (array) config('vnwa.manga.avatar', []);
+
+        $width = $avatarConfig['width'] ?? $avatarConfig['with'] ?? null;
+        $height = $avatarConfig['height'] ?? null;
+        $format = $avatarConfig['format'] ?? 'webp';
+        $quality = (int) ($avatarConfig['quality'] ?? 90);
+
+        // Xác định disk để upload (MinIO hoặc default)
+        $defaultDisk = config('filesystems.default', 'local');
+        $storageDisk = in_array($defaultDisk, ['minio', 's3']) ? $defaultDisk : 'public';
+        $storage = Storage::disk($storageDisk);
+
+        // Tạo file tạm để resize
+        $tempPath = $file->getRealPath();
+        $tempDir = sys_get_temp_dir();
+        $tempFileName = Str::random(40).'.'.$format;
+        $tempFilePath = $tempDir.'/'.$tempFileName;
+
+        try {
+            // Resize và convert ảnh vào file tạm
+            ImageHelper::convert(
+                source: $tempPath,
+                target: $tempFilePath,
+                width: is_numeric($width) ? (int) $width : null,
+                height: is_numeric($height) ? (int) $height : null,
+                extension: (string) $format,
+                quality: $quality,
+            );
+
+            // Upload file đã resize lên storage (MinIO hoặc local)
+            $directory = 'mangas/avatars';
+            $randomName = Str::random(40).'.'.$format;
+            $relativePath = $directory.'/'.$randomName;
+
+            // Đọc file đã resize và upload lên storage
+            $resizedContent = file_get_contents($tempFilePath);
+            $storage->put($relativePath, $resizedContent);
+
+            return $relativePath;
+        } finally {
+            // Xóa file tạm nếu tồn tại
+            if (file_exists($tempFilePath)) {
+                @unlink($tempFilePath);
+            }
+        }
     }
 }

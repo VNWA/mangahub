@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Favorite;
+use App\Models\ReadingHistory;
 use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +15,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
+use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
@@ -78,12 +81,13 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = \App\Models\User::create([
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'is_guest' => false,
         ]);
+        $user->assignRole(Role::where('name', 'user')->first());
 
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -121,6 +125,7 @@ class AuthController extends Controller
             'is_guest' => true,
             'email_verified_at' => now(), // Guest emails are auto-verified
         ]);
+        $user->assignRole(Role::where('name', 'user')->first());
 
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -173,7 +178,7 @@ class AuthController extends Controller
         if (is_array($favorites) && ! empty($favorites)) {
             foreach ($favorites as $mangaId) {
                 if (is_numeric($mangaId)) {
-                    \App\Models\Favorite::firstOrCreate([
+                  Favorite::firstOrCreate([
                         'user_id' => $user->id,
                         'manga_id' => (int) $mangaId,
                     ]);
@@ -185,7 +190,7 @@ class AuthController extends Controller
         if (is_array($readingHistory) && ! empty($readingHistory)) {
             foreach ($readingHistory as $item) {
                 if (isset($item['manga_id']) && is_numeric($item['manga_id'])) {
-                    \App\Models\ReadingHistory::updateOrCreate(
+                  ReadingHistory::updateOrCreate(
                         [
                             'user_id' => $user->id,
                             'manga_id' => (int) $item['manga_id'],
@@ -347,6 +352,7 @@ class AuthController extends Controller
                     'avatar' => $socialUser->getAvatar(),
                     'email_verified_at' => now(),
                 ]);
+                $user->assignRole(Role::where('name', 'user')->first());
             }
 
             $token = $user->createToken('api-token')->plainTextToken;
@@ -412,6 +418,7 @@ class AuthController extends Controller
                     'avatar' => $socialUser->getAvatar(),
                     'email_verified_at' => now(),
                 ]);
+                $user->assignRole(Role::where('name', 'user')->first());
             }
 
             $token = $user->createToken('api-token')->plainTextToken;

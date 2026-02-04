@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('coin_transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('type', ['deposit', 'spend']); // deposit: nạp, spend: tiêu
             $table->unsignedBigInteger('amount'); // Số coin
             $table->string('description')->nullable(); // Mô tả: "Nạp coin", "Mở khóa chapter X"
@@ -23,6 +24,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['user_id', 'type']);
+            $table->index('admin_id');
             $table->index(['reference_type', 'reference_id']);
         });
     }

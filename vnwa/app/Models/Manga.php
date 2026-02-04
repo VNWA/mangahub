@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
+use Storage;
 
 class Manga extends Model
 {
@@ -43,7 +44,18 @@ class Manga extends Model
             'total_ratings' => 'integer',
         ];
     }
+    protected $appends = ['avatar_url'];
+    public function getAvatarUrlAttribute()
+    {
+        if (! $this->avatar) {
+            return url('vnwa/no-image.jpg');
+        }
+        if(str_starts_with($this->avatar, 'http') || str_starts_with($this->avatar, 'https')){
+            return $this->avatar;
+        }
 
+        return Storage::url($this->avatar);
+    }
     public function author(): BelongsTo
     {
         return $this->belongsTo(MangaAuthor::class, 'manga_author_id');
@@ -63,7 +75,11 @@ class Manga extends Model
     {
         return $this->hasMany(MangaChapter::class)->orderBy('order');
     }
-
+public function latestChapters()
+{
+    return $this->hasMany(MangaChapter::class)
+        ->orderByDesc('order');
+}
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(MangaCategory::class, 'manga_category_manga');
