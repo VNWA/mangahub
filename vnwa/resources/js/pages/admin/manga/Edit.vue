@@ -9,7 +9,8 @@ import { Select } from '@/components/ui/select';
 import { Form, Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
-import { ArrowLeft, Upload, X } from 'lucide-vue-next';
+import { ArrowLeft } from 'lucide-vue-next';
+import InputImage from '@/components/input/InputImage.vue';
 import mangas from '@/routes/mangas';
 
 const toast = useToast();
@@ -19,8 +20,7 @@ interface Props {
         id: number;
         name: string;
         slug: string;
-        avatar?: string;
-        avatar_url: string;
+        avatar: string;
         description?: string;
         status: string;
         manga_author_id?: number;
@@ -48,69 +48,26 @@ const form = ref({
     manga_author_id: props.manga.manga_author_id || null,
     manga_badge_id: props.manga.manga_badge_id || null,
     status: props.manga.status,
-    avatar: null as File | null,
+    avatar: props.manga.avatar,
     categories: props.manga.categories.map((c) => c.id),
 });
 
-const avatarPreview = ref<string | null>(props.manga.avatar_url);
-
-const handleAvatarChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-        form.value.avatar = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            avatarPreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(target.files[0]);
-    }
-};
-
-const removeAvatar = () => {
-    form.value.avatar = null;
-    avatarPreview.value = props.manga.avatar || null;
-    const fileInput = document.querySelector('#avatar-input') as HTMLInputElement;
-    if (fileInput) {
-        fileInput.value = '';
-    }
-};
-
-const submit = () => {
-    const formData = new FormData();
-    Object.keys(form.value).forEach((key) => {
-        const value = form.value[key as keyof typeof form.value];
-        if (key === 'avatar' && value) {
-            formData.append(key, value as File);
-        } else if (key === 'categories') {
-            (value as number[]).forEach((id) => {
-                formData.append('categories[]', id.toString());
-            });
-        } else if (value !== null && value !== '') {
-            formData.append(key, value as string | number);
-        }
-    });
-
-    formData.append('_method', 'PUT');
-
-    window.axios
-        .post(mangas.update(props.manga.id).url, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        .then(() => {
-            toast.success('Manga đã được cập nhật thành công.');
+const submit = async () => {
+    try {
+        const response = await window.axios.put(mangas.update(props.manga.id).url, form.value);
+        if (response.data?.success) {
+            toast.success(response.data.message || 'Manga đã được cập nhật thành công.');
             router.visit(mangas.index().url);
-        })
-        .catch((error) => {
-            if (error.response?.data?.errors) {
-                Object.values(error.response.data.errors).flat().forEach((message: any) => {
-                    toast.error(message);
-                });
-            } else {
-                toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật manga.');
-            }
-        });
+        }
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            Object.values(error.response.data.errors).flat().forEach((message: any) => {
+                toast.error(message);
+            });
+        } else {
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật manga.');
+        }
+    }
 };
 </script>
 
@@ -197,25 +154,7 @@ const submit = () => {
                                 <CardDescription>Upload ảnh đại diện mới</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
-                                <div v-if="avatarPreview" class="relative">
-                                    <img :src="avatarPreview" alt="Preview" class="w-full rounded-lg border" />
-                                    <Button type="button" variant="destructive" size="sm" class="absolute right-2 top-2"
-                                        @click="removeAvatar">
-                                        <X class="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <div>
-                                    <Label for="avatar-input" class="cursor-pointer">
-                                        <div
-                                            class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:bg-muted/50 transition-colors">
-                                            <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
-                                            <p class="text-sm font-medium">Click để upload</p>
-                                            <p class="text-xs text-muted-foreground">JPG, PNG (tối đa 2MB)</p>
-                                        </div>
-                                    </Label>
-                                    <Input id="avatar-input" type="file" accept="image/*" class="hidden"
-                                        @change="handleAvatarChange" />
-                                </div>
+                                <InputImage v-model="form.avatar" :width="300" :height="400" format="webp" />
                             </CardContent>
                         </Card>
 

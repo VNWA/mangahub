@@ -6,43 +6,86 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Spinner } from '@/components/ui/spinner';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
+import axios from '@/axios';
 import { ArrowLeft, Palette } from 'lucide-vue-next';
 import badges from '@/routes/badges';
 
 const toast = useToast();
 
+interface Props {
+    badge: {
+        id: number;
+        name: string;
+        slug: string;
+        light_text_color: string;
+        light_bg_color: string;
+        dark_text_color: string;
+        dark_bg_color: string;
+    };
+    isSystemBadge?: boolean;
+}
+
+const props = defineProps<Props>();
+
 const breadcrumbs = [
     { title: 'Dashboard', href: '/admin/dashboard' },
     { title: 'Badges', href: badges.index().url },
-    { title: 'Thêm mới', href: '#' },
+    { title: props.badge.name, href: '#' },
+    { title: 'Chỉnh sửa', href: '#' },
 ];
 
-const form = {
-    name: '',
-    slug: '',
-    light_text_color: '#000000',
-    light_bg_color: '#FFFFFF',
-    dark_text_color: '#FFFFFF',
-    dark_bg_color: '#000000',
-};
-
-const previewBadge = ref({
-    light: {
-        text: form.light_text_color,
-        bg: form.light_bg_color,
-    },
-    dark: {
-        text: form.dark_text_color,
-        bg: form.dark_bg_color,
-    },
+const form = reactive({
+    name: props.badge.name,
+    slug: props.badge.slug,
+    light_text_color: props.badge.light_text_color,
+    light_bg_color: props.badge.light_bg_color,
+    dark_text_color: props.badge.dark_text_color,
+    dark_bg_color: props.badge.dark_bg_color,
 });
+
+const isLoading = ref(false);
+
+const submit = async () => {
+    if (!form.name.trim()) {
+        toast.error('Vui lòng nhập tên badge.');
+        return;
+    }
+
+    // Don't send slug if it's a system badge
+    const dataToSend = { ...form };
+    if (props.isSystemBadge) {
+        delete dataToSend.slug;
+    }
+
+    try {
+        isLoading.value = true;
+        const response = await axios.put(badges.update(props.badge.id).url, dataToSend);
+
+        if (response.data.success) {
+            toast.success(response.data.message || 'Badge đã được cập nhật thành công.');
+            router.visit(badges.index().url);
+        }
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            Object.values(error.response.data.errors).flat().forEach((message: any) => {
+                toast.error(message);
+            });
+        } else {
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật badge.');
+        }
+    } finally {
+        isLoading.value = false;
+    }
+};
 </script>
 
 <template>
-    <Head title="Thêm Badge mới" />
+
+    <Head :title="`Chỉnh sửa - ${badge.name}`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
@@ -55,52 +98,41 @@ const previewBadge = ref({
                     </Link>
                 </Button>
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Thêm Badge mới</h1>
-                    <p class="text-muted-foreground mt-1">Tạo một badge mới với màu sắc tùy chỉnh</p>
+                    <h1 class="text-3xl font-bold tracking-tight">Chỉnh sửa Badge</h1>
+                    <p class="text-muted-foreground mt-1">{{ badge.name }}</p>
                 </div>
             </div>
 
             <Separator />
 
             <!-- Form -->
-            <Form
-                :action="badges.store().url"
-                method="post"
-                :data="form"
-                class="max-w-4xl space-y-6"
-                @success="() => toast.success('Badge đã được tạo thành công.')"
-                @error="(errors) => {
-                    Object.values(errors).flat().forEach((message: any) => {
-                        toast.error(message);
-                    });
-                }"
-            >
+            <form @submit.prevent="submit" class="max-w-4xl space-y-6">
+
                 <div class="grid gap-6 lg:grid-cols-3">
                     <!-- Main Form -->
                     <div class="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Thông tin Badge</CardTitle>
-                                <CardDescription>Nhập thông tin của badge</CardDescription>
+                                <CardDescription>Cập nhật thông tin của badge</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
                                 <div class="space-y-2">
                                     <Label for="name">Tên Badge *</Label>
-                                    <Input
-                                        id="name"
-                                        v-model="form.name"
-                                        placeholder="Ví dụ: Hot, New, Popular"
-                                        required
-                                    />
+                                    <Input id="name" v-model="form.name" required />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="slug">Slug (tùy chọn)</Label>
+                                    <Label for="slug">Slug</Label>
                                     <Input
                                         id="slug"
                                         v-model="form.slug"
-                                        placeholder="hot (tự động tạo nếu để trống)"
+                                        :disabled="isSystemBadge"
+                                        :readonly="isSystemBadge"
                                     />
+                                    <p v-if="isSystemBadge" class="text-xs text-muted-foreground">
+                                        Slug của badge hệ thống không thể thay đổi
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -122,33 +154,17 @@ const previewBadge = ref({
                                         <div class="space-y-2">
                                             <Label for="light_bg_color">Màu nền</Label>
                                             <div class="flex gap-2">
-                                                <Input
-                                                    id="light_bg_color"
-                                                    v-model="form.light_bg_color"
-                                                    type="color"
-                                                    class="h-10 w-20 p-1 cursor-pointer"
-                                                />
-                                                <Input
-                                                    v-model="form.light_bg_color"
-                                                    placeholder="#FFFFFF"
-                                                    class="flex-1"
-                                                />
+                                                <Input id="light_bg_color" v-model="form.light_bg_color" type="color"
+                                                    class="h-10 w-20 p-1 cursor-pointer" />
+                                                <Input v-model="form.light_bg_color" class="flex-1" />
                                             </div>
                                         </div>
                                         <div class="space-y-2">
                                             <Label for="light_text_color">Màu chữ</Label>
                                             <div class="flex gap-2">
-                                                <Input
-                                                    id="light_text_color"
-                                                    v-model="form.light_text_color"
-                                                    type="color"
-                                                    class="h-10 w-20 p-1 cursor-pointer"
-                                                />
-                                                <Input
-                                                    v-model="form.light_text_color"
-                                                    placeholder="#000000"
-                                                    class="flex-1"
-                                                />
+                                                <Input id="light_text_color" v-model="form.light_text_color"
+                                                    type="color" class="h-10 w-20 p-1 cursor-pointer" />
+                                                <Input v-model="form.light_text_color" class="flex-1" />
                                             </div>
                                         </div>
                                     </div>
@@ -161,33 +177,17 @@ const previewBadge = ref({
                                         <div class="space-y-2">
                                             <Label for="dark_bg_color">Màu nền</Label>
                                             <div class="flex gap-2">
-                                                <Input
-                                                    id="dark_bg_color"
-                                                    v-model="form.dark_bg_color"
-                                                    type="color"
-                                                    class="h-10 w-20 p-1 cursor-pointer"
-                                                />
-                                                <Input
-                                                    v-model="form.dark_bg_color"
-                                                    placeholder="#000000"
-                                                    class="flex-1"
-                                                />
+                                                <Input id="dark_bg_color" v-model="form.dark_bg_color" type="color"
+                                                    class="h-10 w-20 p-1 cursor-pointer" />
+                                                <Input v-model="form.dark_bg_color" class="flex-1" />
                                             </div>
                                         </div>
                                         <div class="space-y-2">
                                             <Label for="dark_text_color">Màu chữ</Label>
                                             <div class="flex gap-2">
-                                                <Input
-                                                    id="dark_text_color"
-                                                    v-model="form.dark_text_color"
-                                                    type="color"
-                                                    class="h-10 w-20 p-1 cursor-pointer"
-                                                />
-                                                <Input
-                                                    v-model="form.dark_text_color"
-                                                    placeholder="#FFFFFF"
-                                                    class="flex-1"
-                                                />
+                                                <Input id="dark_text_color" v-model="form.dark_text_color" type="color"
+                                                    class="h-10 w-20 p-1 cursor-pointer" />
+                                                <Input v-model="form.dark_text_color" class="flex-1" />
                                             </div>
                                         </div>
                                     </div>
@@ -204,50 +204,44 @@ const previewBadge = ref({
                                 <CardDescription>Xem trước badge</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
-                                <div v-if="form.name" class="space-y-3">
+                                <div class="space-y-3">
                                     <div>
                                         <p class="text-xs text-muted-foreground mb-2">Light Mode</p>
-                                        <Badge
-                                            :style="{
-                                                color: form.light_text_color,
-                                                backgroundColor: form.light_bg_color,
-                                            }"
-                                            class="text-sm font-semibold"
-                                        >
-                                            {{ form.name || 'Preview' }}
+                                        <Badge :style="{
+                                            color: form.light_text_color,
+                                            backgroundColor: form.light_bg_color,
+                                        }" class="text-sm font-semibold">
+                                            {{ form.name }}
                                         </Badge>
                                     </div>
                                     <div>
                                         <p class="text-xs text-muted-foreground mb-2">Dark Mode</p>
                                         <div class="rounded-lg p-4" style="background-color: #1a1a1a">
-                                            <Badge
-                                                :style="{
-                                                    color: form.dark_text_color,
-                                                    backgroundColor: form.dark_bg_color,
-                                                }"
-                                                class="text-sm font-semibold"
-                                            >
-                                                {{ form.name || 'Preview' }}
+                                            <Badge :style="{
+                                                color: form.dark_text_color,
+                                                backgroundColor: form.dark_bg_color,
+                                            }" class="text-sm font-semibold">
+                                                {{ form.name }}
                                             </Badge>
                                         </div>
                                     </div>
                                 </div>
-                                <p v-else class="text-sm text-muted-foreground text-center py-4">
-                                    Nhập tên badge để xem preview
-                                </p>
                             </CardContent>
                         </Card>
 
                         <!-- Actions -->
                         <div class="flex gap-2">
-                            <Button type="submit" class="flex-1">Tạo Badge</Button>
+                            <Button type="submit" class="flex-1" :disabled="isLoading">
+                                <Spinner v-if="isLoading" class="mr-2 h-4 w-4" />
+                                {{ isLoading ? 'Đang cập nhật...' : 'Cập nhật' }}
+                            </Button>
                             <Button type="button" variant="outline" as-child>
                                 <Link :href="badges.index().url">Hủy</Link>
                             </Button>
                         </div>
                     </div>
                 </div>
-            </Form>
+            </form>
         </div>
     </AppLayout>
 </template>

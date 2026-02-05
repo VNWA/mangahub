@@ -19,6 +19,7 @@ import ChapterZipUploader from '@/components/ChapterZipUploader.vue';
 import ChapterItem from '@/components/ChapterItem.vue';
 import ChapterViewDialog from '@/components/ChapterViewDialog.vue';
 import ChapterEditDialog from '@/components/ChapterEditDialog.vue';
+import ChapterAddUrlsDialog from '@/components/ChapterAddUrlsDialog.vue';
 import {
     Plus,
     Upload,

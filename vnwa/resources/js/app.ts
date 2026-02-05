@@ -5,6 +5,7 @@ import { createApp, h } from 'vue';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import '../css/app.css';
+import '../css/vnwa.scss';
 import { initializeTheme } from './composables/useAppearance';
 import { configureEcho } from '@laravel/echo-vue';
 

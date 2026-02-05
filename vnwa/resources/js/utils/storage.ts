@@ -9,7 +9,7 @@
  */
 export function getStorageUrl(path: string | null | undefined): string | null {
     if (!path) {
-        return null;
+        return '/vnwa/no-image.jpg';
     }
 
     // If already a full URL (http:// or https://), return as is

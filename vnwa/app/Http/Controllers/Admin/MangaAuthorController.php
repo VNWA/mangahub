@@ -26,7 +26,7 @@ class MangaAuthorController extends Controller
 
         $authors = $query->paginate(15)->withQueryString();
 
-        return Inertia::render('Admin/Author/Index', [
+        return Inertia::render('admin/author/Index', [
             'authors' => $authors,
             'filters' => $request->only(['search']),
         ]);
@@ -34,7 +34,7 @@ class MangaAuthorController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Author/Create');
+        return Inertia::render('admin/author/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,11 +43,11 @@ class MangaAuthorController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:manga_authors,slug'],
             'description' => ['nullable', 'string'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:500'],
         ]);
 
-        if ($request->hasFile('avatar')) {
-            $validated['avatar'] = $request->file('avatar')->store('authors/avatars', 'public');
+        if (empty($validated['avatar'])) {
+            unset($validated['avatar']);
         }
 
         MangaAuthor::create($validated);
@@ -60,14 +60,14 @@ class MangaAuthorController extends Controller
     {
         $author->loadCount('mangas');
 
-        return Inertia::render('Admin/Author/Show', [
+        return Inertia::render('admin/author/Show', [
             'author' => $author,
         ]);
     }
 
     public function edit(MangaAuthor $author): Response
     {
-        return Inertia::render('Admin/Author/Edit', [
+        return Inertia::render('admin/author/Edit', [
             'author' => $author,
         ]);
     }
@@ -78,14 +78,16 @@ class MangaAuthorController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:manga_authors,slug,'.$author->id],
             'description' => ['nullable', 'string'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:500'],
         ]);
 
-        if ($request->hasFile('avatar')) {
-            if ($author->avatar) {
-                Storage::disk('public')->delete($author->avatar);
+        if (empty($validated['avatar'])) {
+            unset($validated['avatar']);
+        } else {
+            // If avatar changed, delete old one
+            if ($author->avatar && $author->avatar !== $validated['avatar']) {
+                \App\Jobs\DeleteImageStorageJob::dispatch([$author->avatar], []);
             }
-            $validated['avatar'] = $request->file('avatar')->store('authors/avatars', 'public');
         }
 
         $author->update($validated);

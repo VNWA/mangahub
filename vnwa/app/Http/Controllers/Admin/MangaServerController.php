@@ -24,7 +24,7 @@ class MangaServerController extends Controller
 
         $servers = $query->paginate(15)->withQueryString();
 
-        return Inertia::render('Admin/Server/Index', [
+        return Inertia::render('admin/server/Index', [
             'servers' => $servers,
             'filters' => $request->only(['search']),
         ]);
@@ -32,7 +32,7 @@ class MangaServerController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Server/Create');
+        return Inertia::render('admin/server/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -52,14 +52,14 @@ class MangaServerController extends Controller
     {
         $server->loadCount('chapterContents');
 
-        return Inertia::render('Admin/Server/Show', [
+        return Inertia::render('admin/server/Show', [
             'server' => $server,
         ]);
     }
 
     public function edit(MangaServer $server): Response
     {
-        return Inertia::render('Admin/Server/Edit', [
+        return Inertia::render('admin/server/Edit', [
             'server' => $server,
         ]);
     }

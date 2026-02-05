@@ -35,7 +35,7 @@
             ring-1 ring-zinc-200 dark:ring-zinc-700
             hover:bg-zinc-100 dark:hover:bg-zinc-600 
                ">
-              <span class="text-sm text-zinc-900 dark:text-white">{{ item.name }}</span>
+              <span class="text-xs font-medium text-zinc-900 dark:text-white">{{ item.name }}</span>
               <span v-show="item.created_at" class="text-xs text-zinc-500 dark:text-zinc-400">{{
                 $formatTime(item.created_at || '') }} </span>
             </div>

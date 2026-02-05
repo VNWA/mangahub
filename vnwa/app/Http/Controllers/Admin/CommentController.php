@@ -42,7 +42,7 @@ class CommentController extends Controller
 
         $comments = $query->paginate(20)->withQueryString();
 
-        return Inertia::render('Admin/Comment/Index', [
+        return Inertia::render('admin/comment/Index', [
             'comments' => $comments,
             'filters' => $request->only(['search', 'is_pinned', 'pageable_type']),
         ]);
@@ -60,7 +60,7 @@ class CommentController extends Controller
             'reactions.user:id,name',
         ]);
 
-        return Inertia::render('Admin/Comment/Show', [
+        return Inertia::render('admin/comment/Show', [
             'comment' => $comment,
         ]);
     }

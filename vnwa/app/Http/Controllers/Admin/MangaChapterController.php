@@ -33,7 +33,7 @@ class MangaChapterController extends Controller
 
         $servers = MangaServer::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/Manga/Chapters/Index', [
+        return Inertia::render('admin/manga/chapters/Index', [
             'manga' => $manga->load(['author:id,name', 'badge:id,name']),
             'chapters' => $chapters,
             'servers' => $servers,

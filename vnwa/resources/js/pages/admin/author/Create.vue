@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
-import { ArrowLeft, Upload, X, User } from 'lucide-vue-next';
+import { ArrowLeft } from 'lucide-vue-next';
+import InputImage from '@/components/input/InputImage.vue';
 import authors from '@/routes/authors';
 
 const toast = useToast();
@@ -23,30 +24,7 @@ const form = {
     name: '',
     slug: '',
     description: '',
-    avatar: null as File | null,
-};
-
-const avatarPreview = ref<string | null>(null);
-
-const handleAvatarChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-        form.avatar = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            avatarPreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(target.files[0]);
-    }
-};
-
-const removeAvatar = () => {
-    form.avatar = null;
-    avatarPreview.value = null;
-    const fileInput = document.querySelector('#avatar-input') as HTMLInputElement;
-    if (fileInput) {
-        fileInput.value = '';
-    }
+    avatar: '',
 };
 </script>
 
@@ -76,7 +54,6 @@ const removeAvatar = () => {
                 :action="authors.store().url"
                 method="post"
                 :data="form"
-                enctype="multipart/form-data"
                 class="max-w-3xl space-y-6"
                 @success="() => toast.success('Author đã được tạo thành công.')"
                 @error="(errors) => {
@@ -138,46 +115,7 @@ const removeAvatar = () => {
                                 <CardDescription>Upload ảnh đại diện cho author</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
-                                <div v-if="avatarPreview" class="relative">
-                                    <img
-                                        :src="avatarPreview"
-                                        alt="Preview"
-                                        class="w-full rounded-lg border"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="destructive"
-                                        size="sm"
-                                        class="absolute right-2 top-2"
-                                        @click="removeAvatar"
-                                    >
-                                        <X class="h-4 w-4" />
-                                    </Button>
-                                </div>
-                                <div v-else class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8">
-                                    <User class="mb-2 h-12 w-12 text-muted-foreground" />
-                                    <p class="text-sm text-muted-foreground text-center">
-                                        Chưa có ảnh đại diện
-                                    </p>
-                                </div>
-                                <div>
-                                    <Label for="avatar-input" class="cursor-pointer">
-                                        <div
-                                            class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 hover:bg-muted/50 transition-colors"
-                                        >
-                                            <Upload class="mb-2 h-8 w-8 text-muted-foreground" />
-                                            <p class="text-sm font-medium">Click để upload</p>
-                                            <p class="text-xs text-muted-foreground">JPG, PNG (tối đa 2MB)</p>
-                                        </div>
-                                    </Label>
-                                    <Input
-                                        id="avatar-input"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        @change="handleAvatarChange"
-                                    />
-                                </div>
+                                <InputImage v-model="form.avatar" :width="300" :height="300" format="webp" />
                             </CardContent>
                         </Card>
 

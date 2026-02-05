@@ -20,7 +20,7 @@ class StoreMangaRequest extends FormRequest
             'manga_author_id' => ['nullable', 'exists:manga_authors,id'],
             'manga_badge_id' => ['nullable', 'exists:manga_badges,id'],
             'status' => ['required', 'in:ongoing,completed,hiatus,cancelled'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:500'],
             'categories' => ['nullable', 'array'],
             'categories.*' => ['exists:manga_categories,id'],
         ];
@@ -37,8 +37,8 @@ class StoreMangaRequest extends FormRequest
             'manga_badge_id.exists' => 'Badge không tồn tại.',
             'status.required' => 'Trạng thái là bắt buộc.',
             'status.in' => 'Trạng thái không hợp lệ.',
-            'avatar.image' => 'Avatar phải là file ảnh.',
-            'avatar.max' => 'Avatar không được vượt quá 2MB.',
+            'avatar.string' => 'Avatar phải là chuỗi URL.',
+            'avatar.max' => 'URL avatar không được vượt quá 500 ký tự.',
             'categories.*.exists' => 'Category không tồn tại.',
         ];
     }

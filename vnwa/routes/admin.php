@@ -12,7 +12,9 @@ use App\Http\Controllers\Admin\MangaChapterController;
 use App\Http\Controllers\Admin\MangaController;
 use App\Http\Controllers\Admin\MangaServerController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
@@ -20,7 +22,15 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Mangas
-    Route::resource('mangas', MangaController::class);
+    Route::prefix('mangas')->name('mangas.')->group(function () {
+        Route::get('/', [MangaController::class, 'index'])->name('index');
+        Route::get('/create', [MangaController::class, 'create'])->name('create');
+        Route::post('/', [MangaController::class, 'store'])->name('store');
+        Route::get('/{manga}', [MangaController::class, 'show'])->name('show');
+        Route::get('/{manga}/edit', [MangaController::class, 'edit'])->name('edit');
+        Route::put('/{manga}', [MangaController::class, 'update'])->name('update');
+        Route::delete('/{manga}', [MangaController::class, 'destroy'])->name('destroy');
+    });
 
     // Manga Chapters
     Route::prefix('mangas/{manga}/chapters')->name('mangas.chapters.')->group(function () {
@@ -106,5 +116,19 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         Route::get('/url', 'getUrl')->name('url');
         Route::post('/move', 'move')->name('move');
         Route::post('/copy', 'copy')->name('copy');
+
+    });
+
+    Route::prefix('upload')->name('upload.')->controller(UploadController::class)->group(function () {
+        Route::post('/upload-image', 'uploadImage')->name('upload-image');
+        Route::post('/temp-delete', 'tempDelete')->name('temp-delete');
+    });
+
+    Route::prefix('config')->name('config.settings.')->controller(SettingController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/{type}/load-data', 'loadData')->name('load');
+        Route::post('/{type}/update', 'update')->name('update');
+        Route::get('/{key}', 'file')->name('file');
+        Route::post('update-appearance', 'updateAppearance')->name('update-appearance');
     });
 });

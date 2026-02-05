@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import { ArrowLeft } from 'lucide-vue-next';
+import InputImage from '@/components/input/InputImage.vue';
 import categories from '@/routes/categories';
 
 const breadcrumbs = [
@@ -21,21 +22,7 @@ const form = {
     slug: '',
     description: '',
     icon: '',
-    avatar: null as File | null,
-};
-
-const avatarPreview = ref<string | null>(null);
-
-const handleAvatarChange = (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-        form.avatar = target.files[0];
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            avatarPreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(target.files[0]);
-    }
+    avatar: '',
 };
 </script>
 
@@ -63,7 +50,6 @@ const handleAvatarChange = (event: Event) => {
                 :action="categories.store().url"
                 method="post"
                 :data="form"
-                enctype="multipart/form-data"
                 class="max-w-2xl space-y-6"
             >
                 <Card>
@@ -98,10 +84,7 @@ const handleAvatarChange = (event: Event) => {
 
                         <div class="space-y-2">
                             <Label>Ảnh đại diện</Label>
-                            <div v-if="avatarPreview" class="relative mb-2">
-                                <img :src="avatarPreview" alt="Preview" class="w-32 rounded-lg border" />
-                            </div>
-                            <Input type="file" accept="image/*" @change="handleAvatarChange" />
+                            <InputImage v-model="form.avatar" :width="200" :height="200" format="webp" />
                         </div>
                     </CardContent>
                 </Card>

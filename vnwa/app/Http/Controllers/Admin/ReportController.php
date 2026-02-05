@@ -46,7 +46,7 @@ class ReportController extends Controller
             'rejected' => Report::where('status', 'rejected')->count(),
         ];
 
-        return Inertia::render('Admin/Report/Index', [
+        return Inertia::render('admin/report/Index', [
             'reports' => $reports,
             'stats' => $stats,
             'filters' => $request->only(['search', 'status', 'type']),
@@ -57,7 +57,7 @@ class ReportController extends Controller
     {
         $report->load(['user', 'reviewer', 'reportable']);
 
-        return Inertia::render('Admin/Report/Show', [
+        return Inertia::render('admin/report/Show', [
             'report' => $report,
         ]);
     }

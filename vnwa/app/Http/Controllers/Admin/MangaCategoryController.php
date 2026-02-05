@@ -26,7 +26,7 @@ class MangaCategoryController extends Controller
 
         $categories = $query->paginate(15)->withQueryString();
 
-        return Inertia::render('Admin/Category/Index', [
+        return Inertia::render('admin/category/Index', [
             'categories' => $categories,
             'filters' => $request->only(['search']),
         ]);
@@ -34,7 +34,7 @@ class MangaCategoryController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Category/Create');
+        return Inertia::render('admin/category/Create');
     }
 
     public function store(Request $request): RedirectResponse
@@ -43,12 +43,12 @@ class MangaCategoryController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:manga_categories,slug'],
             'description' => ['nullable', 'string'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:500'],
             'icon' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if ($request->hasFile('avatar')) {
-            $validated['avatar'] = $request->file('avatar')->store('categories/avatars', 'public');
+        if (empty($validated['avatar'])) {
+            unset($validated['avatar']);
         }
 
         MangaCategory::create($validated);
@@ -61,14 +61,14 @@ class MangaCategoryController extends Controller
     {
         $category->loadCount('mangas');
 
-        return Inertia::render('Admin/Category/Show', [
+        return Inertia::render('admin/category/Show', [
             'category' => $category,
         ]);
     }
 
     public function edit(MangaCategory $category): Response
     {
-        return Inertia::render('Admin/Category/Edit', [
+        return Inertia::render('admin/category/Edit', [
             'category' => $category,
         ]);
     }
@@ -79,15 +79,17 @@ class MangaCategoryController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:manga_categories,slug,'.$category->id],
             'description' => ['nullable', 'string'],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'avatar' => ['nullable', 'string', 'max:500'],
             'icon' => ['nullable', 'string', 'max:255'],
         ]);
 
-        if ($request->hasFile('avatar')) {
-            if ($category->avatar) {
-                Storage::disk('public')->delete($category->avatar);
+        if (empty($validated['avatar'])) {
+            unset($validated['avatar']);
+        } else {
+            // If avatar changed, delete old one
+            if ($category->avatar && $category->avatar !== $validated['avatar']) {
+                \App\Jobs\DeleteImageStorageJob::dispatch([$category->avatar], []);
             }
-            $validated['avatar'] = $request->file('avatar')->store('categories/avatars', 'public');
         }
 
         $category->update($validated);

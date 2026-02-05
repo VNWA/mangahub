@@ -33,7 +33,7 @@ class UserController extends Controller
 
         $users = $query->paginate(20)->withQueryString();
 
-        return Inertia::render('Admin/User/Index', [
+        return Inertia::render('admin/user/Index', [
             'users' => $users,
             'filters' => $request->only(['search', 'is_guest']),
         ]);
@@ -70,7 +70,7 @@ class UserController extends Controller
             'total_comments' => \App\Models\Comment::where('user_id', $user->id)->count(),
         ];
 
-        return Inertia::render('Admin/User/Show', [
+        return Inertia::render('admin/user/Show', [
             'user' => $user,
             'comments' => $comments,
             'transactions' => $transactions,
@@ -80,14 +80,14 @@ class UserController extends Controller
 
     public function edit(User $user): Response
     {
-        return Inertia::render('Admin/User/Edit', [
+        return Inertia::render('admin/user/Edit', [
             'user' => $user,
         ]);
     }
 
     public function addCoinPage(User $user): Response
     {
-        return Inertia::render('Admin/User/AddCoin', [
+        return Inertia::render('admin/user/AddCoin', [
             'user' => $user->only(['id', 'name', 'email', 'coin']),
         ]);
     }

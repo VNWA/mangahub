@@ -36,9 +36,12 @@ import {
     Users,
     AlertTriangle,
     Folder,
+    Settings,
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import files from '@/routes/files';
+import settings from '@/routes/settings';
+import config from '@/routes/config';
 
 const mainNavItems: NavItem[] = [
     {
@@ -95,6 +98,12 @@ const mainNavItems: NavItem[] = [
         title: 'Files',
         href: files.index(),
         icon: Folder,
+    },
+    {
+        title: 'Config Settings',
+        icon: Settings,
+        href: config.settings.index().url,
+
     },
 ];
 

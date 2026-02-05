@@ -3,23 +3,31 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use RahulHaque\Filepond\Facades\Filepond;
 use ZipArchive;
+use App\Helpers\Image as ImageHelper;
 
 class FileController extends Controller
 {
+
+
+
+
+
     public function index(Request $request): Response
     {
         $path = $request->get('path', '');
         $files = $this->listFiles($path);
 
-        return Inertia::render('Admin/File/Index', [
+        return Inertia::render('admin/file/Index', [
             'files' => $files,
             'currentPath' => $path,
         ]);

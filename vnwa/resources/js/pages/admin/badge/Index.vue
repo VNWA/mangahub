@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
 import { ref } from 'vue';
+import axios from '@/axios';
 import {
     Award,
     Plus,
@@ -38,6 +39,7 @@ interface BadgeItem {
     dark_text_color: string;
     dark_bg_color: string;
     mangas_count?: number;
+    is_system_badge?: boolean;
 }
 
 interface Props {
@@ -80,19 +82,20 @@ const handleSearch = () => {
     );
 };
 
-const handleDelete = (badgeId: number) => {
+const handleDelete = async (badgeId: number) => {
     if (!confirm('Bạn có chắc chắn muốn xóa badge này?')) {
         return;
     }
 
-    router.delete(badges.destroy(badgeId).url, {
-        onSuccess: () => {
-            toast.success('Badge đã được xóa thành công.');
-        },
-        onError: () => {
-            toast.error('Có lỗi xảy ra khi xóa badge.');
-        },
-    });
+    try {
+        const response = await axios.delete(badges.destroy(badgeId).url);
+        if (response.data?.success) {
+            toast.success(response.data.message || 'Badge đã được xóa thành công.');
+            router.reload({ only: ['badges'] });
+        }
+    } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi xóa badge.');
+    }
 };
 
 const clearFilters = () => {
@@ -186,7 +189,12 @@ const clearFilters = () => {
                                             {{ badge.name }}
                                         </Badge>
                                     </div>
-                                    <h3 class="text-lg font-semibold mb-2">{{ badge.name }}</h3>
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <h3 class="text-lg font-semibold">{{ badge.name }}</h3>
+                                        <Badge v-if="badge.is_system_badge" variant="secondary" class="text-xs">
+                                            Hệ thống
+                                        </Badge>
+                                    </div>
                                     <div class="space-y-2 text-xs text-muted-foreground">
                                         <div class="flex items-center gap-2">
                                             <span>Light:</span>
@@ -222,7 +230,7 @@ const clearFilters = () => {
                                 </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger as-child>
-                                        <Button variant="ghost" size="sm" class="h-8 w-8 p-0 flex-shrink-0">
+                                        <Button variant="ghost" size="sm" class="h-8 w-8 p-0 shrink-0">
                                             <MoreVertical class="h-4 w-4" />
                                         </Button>
                                     </DropdownMenuTrigger>
@@ -240,11 +248,20 @@ const clearFilters = () => {
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
+                                            v-if="!badge.is_system_badge"
                                             class="text-destructive"
                                             @click="handleDelete(badge.id)"
                                         >
                                             <Trash2 class="mr-2 h-4 w-4" />
                                             Xóa
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            v-else
+                                            disabled
+                                            class="text-muted-foreground"
+                                        >
+                                            <Trash2 class="mr-2 h-4 w-4" />
+                                            Không thể xóa badge hệ thống
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>

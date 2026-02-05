@@ -6,46 +6,63 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Form, Head, Link } from '@inertiajs/vue3';
+import { Spinner } from '@/components/ui/spinner';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { useToast } from 'vue-toastification';
+import { reactive, ref } from 'vue';
+import axios from '@/axios';
 import { ArrowLeft, Palette } from 'lucide-vue-next';
 import badges from '@/routes/badges';
 
 const toast = useToast();
 
-interface Props {
-    badge: {
-        id: number;
-        name: string;
-        slug: string;
-        light_text_color: string;
-        light_bg_color: string;
-        dark_text_color: string;
-        dark_bg_color: string;
-    };
-}
-
-const props = defineProps<Props>();
-
 const breadcrumbs = [
     { title: 'Dashboard', href: '/admin/dashboard' },
     { title: 'Badges', href: badges.index().url },
-    { title: props.badge.name, href: '#' },
-    { title: 'Chỉnh sửa', href: '#' },
+    { title: 'Thêm mới', href: '#' },
 ];
 
-const form = {
-    name: props.badge.name,
-    slug: props.badge.slug,
-    light_text_color: props.badge.light_text_color,
-    light_bg_color: props.badge.light_bg_color,
-    dark_text_color: props.badge.dark_text_color,
-    dark_bg_color: props.badge.dark_bg_color,
+const form = reactive({
+    name: '',
+    slug: '',
+    light_text_color: '#000000',
+    light_bg_color: '#FFFFFF',
+    dark_text_color: '#FFFFFF',
+    dark_bg_color: '#000000',
+});
+
+const isLoading = ref(false);
+
+const submit = async () => {
+    if (!form.name.trim()) {
+        toast.error('Vui lòng nhập tên badge.');
+        return;
+    }
+
+    try {
+        isLoading.value = true;
+        const response = await axios.post(badges.store().url, form);
+
+        if (response.data.success) {
+            toast.success(response.data.message || 'Badge đã được tạo thành công.');
+            router.visit(badges.index().url);
+        }
+    } catch (error: any) {
+        if (error.response?.data?.errors) {
+            Object.values(error.response.data.errors).flat().forEach((message: any) => {
+                toast.error(message);
+            });
+        } else {
+            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi tạo badge.');
+        }
+    } finally {
+        isLoading.value = false;
+    }
 };
 </script>
 
 <template>
-    <Head :title="`Chỉnh sửa - ${badge.name}`" />
+    <Head title="Thêm Badge mới" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-6">
@@ -58,35 +75,22 @@ const form = {
                     </Link>
                 </Button>
                 <div>
-                    <h1 class="text-3xl font-bold tracking-tight">Chỉnh sửa Badge</h1>
-                    <p class="text-muted-foreground mt-1">{{ badge.name }}</p>
+                    <h1 class="text-3xl font-bold tracking-tight">Thêm Badge mới</h1>
+                    <p class="text-muted-foreground mt-1">Tạo một badge mới với màu sắc tùy chỉnh</p>
                 </div>
             </div>
 
             <Separator />
 
             <!-- Form -->
-            <Form
-                :action="badges.update(badge.id).url"
-                method="post"
-                :data="form"
-                class="max-w-4xl space-y-6"
-                @success="() => toast.success('Badge đã được cập nhật thành công.')"
-                @error="(errors) => {
-                    Object.values(errors).flat().forEach((message: any) => {
-                        toast.error(message);
-                    });
-                }"
-            >
-                <input type="hidden" name="_method" value="PUT" />
-
+            <form @submit.prevent="submit" class="max-w-4xl space-y-6">
                 <div class="grid gap-6 lg:grid-cols-3">
                     <!-- Main Form -->
                     <div class="lg:col-span-2 space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Thông tin Badge</CardTitle>
-                                <CardDescription>Cập nhật thông tin của badge</CardDescription>
+                                <CardDescription>Nhập thông tin của badge</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
                                 <div class="space-y-2">
@@ -94,15 +98,17 @@ const form = {
                                     <Input
                                         id="name"
                                         v-model="form.name"
+                                        placeholder="Ví dụ: Hot, New, Popular"
                                         required
                                     />
                                 </div>
 
                                 <div class="space-y-2">
-                                    <Label for="slug">Slug</Label>
+                                    <Label for="slug">Slug (tùy chọn)</Label>
                                     <Input
                                         id="slug"
                                         v-model="form.slug"
+                                        placeholder="hot (tự động tạo nếu để trống)"
                                     />
                                 </div>
                             </CardContent>
@@ -133,6 +139,7 @@ const form = {
                                                 />
                                                 <Input
                                                     v-model="form.light_bg_color"
+                                                    placeholder="#FFFFFF"
                                                     class="flex-1"
                                                 />
                                             </div>
@@ -148,6 +155,7 @@ const form = {
                                                 />
                                                 <Input
                                                     v-model="form.light_text_color"
+                                                    placeholder="#000000"
                                                     class="flex-1"
                                                 />
                                             </div>
@@ -170,6 +178,7 @@ const form = {
                                                 />
                                                 <Input
                                                     v-model="form.dark_bg_color"
+                                                    placeholder="#000000"
                                                     class="flex-1"
                                                 />
                                             </div>
@@ -185,6 +194,7 @@ const form = {
                                                 />
                                                 <Input
                                                     v-model="form.dark_text_color"
+                                                    placeholder="#FFFFFF"
                                                     class="flex-1"
                                                 />
                                             </div>
@@ -203,7 +213,7 @@ const form = {
                                 <CardDescription>Xem trước badge</CardDescription>
                             </CardHeader>
                             <CardContent class="space-y-4">
-                                <div class="space-y-3">
+                                <div v-if="form.name" class="space-y-3">
                                     <div>
                                         <p class="text-xs text-muted-foreground mb-2">Light Mode</p>
                                         <Badge
@@ -213,7 +223,7 @@ const form = {
                                             }"
                                             class="text-sm font-semibold"
                                         >
-                                            {{ form.name }}
+                                            {{ form.name || 'Preview' }}
                                         </Badge>
                                     </div>
                                     <div>
@@ -226,24 +236,30 @@ const form = {
                                                 }"
                                                 class="text-sm font-semibold"
                                             >
-                                                {{ form.name }}
+                                                {{ form.name || 'Preview' }}
                                             </Badge>
                                         </div>
                                     </div>
                                 </div>
+                                <p v-else class="text-sm text-muted-foreground text-center py-4">
+                                    Nhập tên badge để xem preview
+                                </p>
                             </CardContent>
                         </Card>
 
                         <!-- Actions -->
                         <div class="flex gap-2">
-                            <Button type="submit" class="flex-1">Cập nhật</Button>
+                            <Button type="submit" class="flex-1" :disabled="isLoading">
+                                <Spinner v-if="isLoading" class="mr-2 h-4 w-4" />
+                                {{ isLoading ? 'Đang tạo...' : 'Tạo Badge' }}
+                            </Button>
                             <Button type="button" variant="outline" as-child>
                                 <Link :href="badges.index().url">Hủy</Link>
                             </Button>
                         </div>
                     </div>
                 </div>
-            </Form>
+            </form>
         </div>
     </AppLayout>
 </template>

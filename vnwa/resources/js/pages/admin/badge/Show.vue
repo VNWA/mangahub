@@ -26,6 +26,7 @@ interface Props {
         dark_bg_color: string;
         mangas_count?: number;
     };
+    isSystemBadge?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -60,6 +61,9 @@ const breadcrumbs = [
                             class="text-lg font-semibold px-3 py-1"
                         >
                             {{ badge.name }}
+                        </Badge>
+                        <Badge v-if="isSystemBadge" variant="secondary" class="text-sm">
+                            Hệ thống
                         </Badge>
                         <Badge variant="secondary" class="text-sm">
                             {{ badge.mangas_count || 0 }} manga

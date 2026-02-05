@@ -44,7 +44,7 @@ class CoinController extends Controller
             'pending_requests_amount' => CoinRequest::where('status', 'pending')->sum('amount'),
         ];
 
-        return Inertia::render('Admin/Coin/Index', [
+        return Inertia::render('admin/coin/Index', [
             'transactions' => $transactions,
             'stats' => $stats,
             'filters' => $request->only(['search', 'type', 'user_id']),
@@ -62,7 +62,7 @@ class CoinController extends Controller
 
         $transactions = $query->paginate(30)->withQueryString();
 
-        return Inertia::render('Admin/Coin/UserTransactions', [
+        return Inertia::render('admin/coin/UserTransactions', [
             'user' => $user,
             'transactions' => $transactions,
             'filters' => $request->only(['type']),

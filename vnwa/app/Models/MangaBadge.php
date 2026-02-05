@@ -55,4 +55,20 @@ class MangaBadge extends Model
     {
         return $this->hasMany(Manga::class, 'manga_badge_id');
     }
+
+    /**
+     * System badges that cannot be deleted or have their slug changed
+     */
+    public static function getSystemBadgeSlugs(): array
+    {
+        return ['hot', 'new', 'popular', 'trending', 'featured'];
+    }
+
+    /**
+     * Check if this badge is a system badge
+     */
+    public function isSystemBadge(): bool
+    {
+        return in_array(strtolower($this->slug), self::getSystemBadgeSlugs());
+    }
 }

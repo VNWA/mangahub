@@ -44,7 +44,7 @@ class MangaController extends Controller
         $badges = MangaBadge::orderBy('name')->get(['id', 'name']);
         $categories = MangaCategory::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/Manga/Index', [
+        return Inertia::render('admin/manga/Index', [
             'mangas' => $mangas,
             'authors' => $authors,
             'badges' => $badges,
@@ -59,26 +59,35 @@ class MangaController extends Controller
         $badges = MangaBadge::orderBy('name')->get(['id', 'name']);
         $categories = MangaCategory::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/Manga/Create', [
+        return Inertia::render('admin/manga/Create', [
             'authors' => $authors,
             'badges' => $badges,
             'categories' => $categories,
         ]);
     }
 
-    public function store(StoreMangaRequest $request): RedirectResponse
+    public function store(StoreMangaRequest $request): \Illuminate\Http\JsonResponse|RedirectResponse
     {
         $data = $request->validated();
         $data['user_id'] = auth()->id();
 
-        if ($request->hasFile('avatar')) {
-            $data['avatar'] = $this->storeResizedAvatar($request->file('avatar'));
+        // Avatar is now a URL string, just save it directly
+        if (empty($data['avatar'])) {
+            unset($data['avatar']);
         }
 
         $manga = Manga::create($data);
 
         if ($request->has('categories') && is_array($request->categories)) {
             $manga->categories()->sync($request->categories);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Manga đã được tạo thành công.',
+                'manga' => $manga->load(['author:id,name', 'badge:id,name', 'categories:id,name']),
+            ]);
         }
 
         return redirect()->route('mangas.index')
@@ -89,7 +98,7 @@ class MangaController extends Controller
     {
         $manga->load(['author', 'badge', 'user', 'categories', 'chapters']);
 
-        return Inertia::render('Admin/Manga/Show', [
+        return Inertia::render('admin/manga/Show', [
             'manga' => $manga,
         ]);
     }
@@ -101,7 +110,7 @@ class MangaController extends Controller
         $badges = MangaBadge::orderBy('name')->get(['id', 'name']);
         $categories = MangaCategory::orderBy('name')->get(['id', 'name']);
 
-        return Inertia::render('Admin/Manga/Edit', [
+        return Inertia::render('admin/manga/Edit', [
             'manga' => $manga,
             'authors' => $authors,
             'badges' => $badges,
@@ -109,20 +118,18 @@ class MangaController extends Controller
         ]);
     }
 
-    public function update(UpdateMangaRequest $request, Manga $manga): RedirectResponse
+    public function update(UpdateMangaRequest $request, Manga $manga): \Illuminate\Http\JsonResponse|RedirectResponse
     {
         $data = $request->validated();
 
-        if ($request->hasFile('avatar')) {
-            // Lưu avatar cũ để xóa sau
-            $oldAvatar = $manga->avatar;
-
-            // Upload avatar mới (resize theo config + random name)
-            $data['avatar'] = $this->storeResizedAvatar($request->file('avatar'));
-
-            // Xóa avatar cũ bằng job
-            if ($oldAvatar) {
-                DeleteImageStorageJob::dispatch([$oldAvatar], []);
+        // Avatar is now a URL string
+        // If avatar is empty, keep the old one
+        if (empty($data['avatar'])) {
+            unset($data['avatar']);
+        } else {
+            // If avatar changed, delete old one
+            if ($manga->avatar && $manga->avatar !== $data['avatar']) {
+                DeleteImageStorageJob::dispatch([$manga->avatar], []);
             }
         }
 
@@ -134,11 +141,19 @@ class MangaController extends Controller
             $manga->categories()->detach();
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Manga đã được cập nhật thành công.',
+                'manga' => $manga->load(['author:id,name', 'badge:id,name', 'categories:id,name']),
+            ]);
+        }
+
         return redirect()->route('mangas.index')
             ->with('success', 'Manga đã được cập nhật thành công.');
     }
 
-    public function destroy(Manga $manga): RedirectResponse
+    public function destroy(Request $request, Manga $manga): \Illuminate\Http\JsonResponse|RedirectResponse
     {
         // Thu thập tất cả URLs từ chapters và avatar
         $urls = [];
@@ -171,6 +186,13 @@ class MangaController extends Controller
 
         // Dispatch job để xóa ảnh bất đồng bộ
         \App\Jobs\DeleteImageStorageJob::dispatch($urls, $directories);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Manga đã được xóa thành công. Các file ảnh sẽ được xóa trong background.',
+            ]);
+        }
 
         return redirect()->route('mangas.index')
             ->with('success', 'Manga đã được xóa thành công. Các file ảnh sẽ được xóa trong background.');

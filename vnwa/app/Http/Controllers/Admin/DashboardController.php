@@ -44,7 +44,7 @@ class DashboardController extends Controller
             ->get()
             ->pluck('count', 'status');
 
-        return Inertia::render('Admin/Dashboard', [
+        return Inertia::render('admin/Dashboard', [
             'stats' => $stats,
             'recentMangas' => $recentMangas,
             'topMangas' => $topMangas,

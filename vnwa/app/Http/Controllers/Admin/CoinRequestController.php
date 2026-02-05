@@ -44,7 +44,7 @@ class CoinRequestController extends Controller
             'total_amount_approved' => CoinRequest::where('status', 'approved')->sum('amount'),
         ];
 
-        return Inertia::render('Admin/Coin/Requests/Index', [
+        return Inertia::render('admin/coin/requests/Index', [
             'requests' => $requests,
             'stats' => $stats,
             'filters' => $request->only(['search', 'status', 'payment_method']),
@@ -55,7 +55,7 @@ class CoinRequestController extends Controller
     {
         $coinRequest->load(['user:id,name,email,avatar,coin', 'processor:id,name,email']);
 
-        return Inertia::render('Admin/Coin/Requests/Show', [
+        return Inertia::render('admin/coin/requests/Show', [
             'request' => $coinRequest,
         ]);
     }
