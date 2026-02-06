@@ -23,12 +23,30 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Internal NestJS 11.0.16 crawl service for managing manga crawling operations. This service provides REST APIs for Laravel (vnwa) to control crawl jobs and sync data to the main database.
+
+**Key Features:**
+- Dual PostgreSQL database connections (crawl_database + vnwa_database)
+- BullMQ queue system for background job processing
+- Scheduled cron jobs for automated crawling
+- REST API for Laravel integration
+- TypeORM entities and migrations
+- Production-ready architecture
+
+See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation.
 
 ## Project setup
 
 ```bash
+# Install dependencies
 $ npm install
+
+# Copy environment file
+$ cp .env.example .env
+
+# Configure database and Redis connections in .env
+# Then run migrations
+$ npm run migration:run
 ```
 
 ## Compile and run the project

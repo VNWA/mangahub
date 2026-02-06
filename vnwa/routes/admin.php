@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
     // Dashboard
@@ -130,5 +131,11 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         Route::post('/{type}/update', 'update')->name('update');
         Route::get('/{key}', 'file')->name('file');
         Route::post('update-appearance', 'updateAppearance')->name('update-appearance');
+    });
+
+    Route::prefix('crawl')->name('crawl.')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('admin/crawl/Index');
+        })->name('index');
     });
 });

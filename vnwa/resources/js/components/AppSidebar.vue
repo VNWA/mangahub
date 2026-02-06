@@ -37,11 +37,12 @@ import {
     AlertTriangle,
     Folder,
     Settings,
+    Database,
 } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import files from '@/routes/files';
-import settings from '@/routes/settings';
 import config from '@/routes/config';
+import crawl from '@/routes/crawl';
 
 const mainNavItems: NavItem[] = [
     {
@@ -104,6 +105,11 @@ const mainNavItems: NavItem[] = [
         icon: Settings,
         href: config.settings.index().url,
 
+    },
+    {
+        title: 'Crawl',
+        href: crawl.index().url,
+        icon: Database,
     },
 ];
 
