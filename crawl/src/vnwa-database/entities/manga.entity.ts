@@ -20,13 +20,13 @@ export class Manga {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'manga_author_id', type: 'int', nullable: true })
   mangaAuthorId: number | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'manga_badge_id', type: 'int', nullable: true })
   mangaBadgeId: number | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ name: 'user_id', type: 'int', nullable: true })
   userId: number | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -48,31 +48,31 @@ export class Manga {
   })
   status: MangaStatus;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'total_views', type: 'int', default: 0 })
   totalViews: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'monthly_views', type: 'int', default: 0 })
   monthlyViews: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'weekly_views', type: 'int', default: 0 })
   weeklyViews: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'daily_views', type: 'int', default: 0 })
   dailyViews: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'total_follow', type: 'int', default: 0 })
   totalFollow: number;
 
   @Column({ type: 'float', default: 0 })
   rating: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'total_ratings', type: 'int', default: 0 })
   totalRatings: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @OneToMany(() => MangaChapter, (chapter) => chapter.manga)

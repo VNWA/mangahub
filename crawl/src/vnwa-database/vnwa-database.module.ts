@@ -4,9 +4,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Manga } from './entities/manga.entity';
 import { MangaChapter } from './entities/manga-chapter.entity';
 import { ServerChapterContent } from './entities/server-chapter-content.entity';
+import { MangaAuthor } from './entities/manga-author.entity';
+import { MangaCategory } from './entities/manga-category.entity';
 import { MangaRepository } from './repositories/manga.repository';
 import { MangaChapterRepository } from './repositories/manga-chapter.repository';
 import { ServerChapterContentRepository } from './repositories/server-chapter-content.repository';
+import { MangaAuthorRepository } from './repositories/manga-author.repository';
+import { MangaCategoryRepository } from './repositories/manga-category.repository';
 
 @Module({
   imports: [
@@ -23,7 +27,7 @@ import { ServerChapterContentRepository } from './repositories/server-chapter-co
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature(
-      [Manga, MangaChapter, ServerChapterContent],
+      [Manga, MangaChapter, ServerChapterContent, MangaAuthor, MangaCategory],
       'vnwa',
     ),
   ],
@@ -31,12 +35,16 @@ import { ServerChapterContentRepository } from './repositories/server-chapter-co
     MangaRepository,
     MangaChapterRepository,
     ServerChapterContentRepository,
+    MangaAuthorRepository,
+    MangaCategoryRepository,
   ],
   exports: [
     TypeOrmModule,
     MangaRepository,
     MangaChapterRepository,
     ServerChapterContentRepository,
+    MangaAuthorRepository,
+    MangaCategoryRepository,
   ],
 })
 export class VnwaDatabaseModule {}

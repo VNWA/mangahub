@@ -7,10 +7,6 @@ export class UpdateCrawlMangaDto {
   @IsOptional()
   crawlUrl?: string;
 
-  @IsInt()
-  @IsOptional()
-  sourceId?: number;
-
   @IsString()
   @IsOptional()
   title?: string;

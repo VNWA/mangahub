@@ -7,7 +7,7 @@
  * If the path is already a full URL, return it as is
  * If it's a storage path, prepend the storage URL
  */
-export function getStorageUrl(path: string | null | undefined): string | null {
+export function getStorageUrl(path: string | null | undefined): string {
     if (!path) {
         return '/vnwa/no-image.jpg';
     }

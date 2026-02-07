@@ -6,12 +6,13 @@ import { CrawlModule } from './crawl/crawl.module';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import appConfig from './config/app.config';
+import minioConfig from './config/minio.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, redisConfig, appConfig],
+      load: [databaseConfig, redisConfig, appConfig, minioConfig],
       envFilePath: ['.env.local', '.env'],
     }),
     CrawlModule,

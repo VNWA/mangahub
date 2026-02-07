@@ -14,22 +14,22 @@ export class ServerChapterContent {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'manga_server_id', type: 'int' })
   mangaServerId: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'manga_chapter_id', type: 'int' })
   mangaChapterId: number;
 
   @ManyToOne(() => MangaChapter, (chapter) => chapter.contents)
-  @JoinColumn({ name: 'mangaChapterId' })
+  @JoinColumn({ name: 'manga_chapter_id' })
   mangaChapter: MangaChapter;
 
   @Column({ type: 'json' })
   urls: string[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

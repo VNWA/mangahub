@@ -137,5 +137,8 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
         Route::get('/', function () {
             return Inertia::render('admin/crawl/Index');
         })->name('index');
+        Route::get('/create', function () {
+            return Inertia::render('admin/crawl/Create');
+        })->name('create');
     });
 });

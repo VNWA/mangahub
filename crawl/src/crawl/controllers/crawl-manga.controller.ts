@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { CrawlMangaService } from '../services/crawl-manga.service';
 import { CreateCrawlMangaDto } from '../dto/create-crawl-manga.dto';
@@ -23,8 +24,13 @@ export class CrawlMangaController {
   ) {}
 
   @Get()
-  async findAll() {
-    return this.crawlMangaService.findAll();
+  async findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 15;
+    return this.crawlMangaService.findAllPaginated(pageNum, limitNum);
   }
 
   @Get(':id')
@@ -57,6 +63,13 @@ export class CrawlMangaController {
   async runCrawl(@Param('id', ParseIntPipe) id: number) {
     await this.crawlEngineService.runMangaCrawl(id);
     return { message: 'Crawl job started', crawlMangaId: id };
+  }
+
+  @Post(':id/crawl-chapters')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async crawlChapters(@Param('id', ParseIntPipe) id: number) {
+    await this.crawlEngineService.crawlChapters(id);
+    return { message: 'Chapters crawl started', crawlMangaId: id };
   }
 
   @Post('run-all')

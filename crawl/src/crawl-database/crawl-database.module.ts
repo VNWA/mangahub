@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CrawlSource } from './entities/crawl-source.entity';
 import { CrawlManga } from './entities/crawl-manga.entity';
 import { CrawlJob } from './entities/crawl-job.entity';
 
@@ -20,7 +19,7 @@ import { CrawlJob } from './entities/crawl-job.entity';
       inject: [ConfigService],
     }),
     TypeOrmModule.forFeature(
-      [CrawlSource, CrawlManga, CrawlJob],
+      [CrawlManga, CrawlJob],
       'crawl',
     ),
   ],

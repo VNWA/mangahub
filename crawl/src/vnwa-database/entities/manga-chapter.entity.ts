@@ -16,14 +16,14 @@ export class MangaChapter {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'manga_id', type: 'int' })
   mangaId: number;
 
   @ManyToOne(() => Manga, (manga) => manga.chapters)
-  @JoinColumn({ name: 'mangaId' })
+  @JoinColumn({ name: 'manga_id' })
   manga: Manga;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'user_id', type: 'int' })
   userId: number;
 
   @Column({ type: 'int', default: 0 })
@@ -38,16 +38,16 @@ export class MangaChapter {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ name: 'coin_cost', type: 'int', default: 0 })
   coinCost: number;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ name: 'is_locked', type: 'boolean', default: false })
   isLocked: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @OneToMany(

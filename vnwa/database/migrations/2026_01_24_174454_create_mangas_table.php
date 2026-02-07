@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
             $table->string('avatar')->nullable();
             $table->string('name');
+            $table->string('other_name')->nullable();
             $table->string('slug')->unique();
             $table->longText('description')->nullable();
             $table->enum('status', ['ongoing', 'completed', 'hiatus', 'cancelled'])->default('ongoing');

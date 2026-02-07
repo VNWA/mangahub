@@ -5,32 +5,23 @@ services:
     image: minio/minio:latest
     container_name: minio
     restart: unless-stopped
-
     ports:
       - "9000:9000"
       - "9001:9001"
-
     volumes:
       - ./storage:/data
-
     environment:
       MINIO_ROOT_USER: vnwaadmin
       MINIO_ROOT_PASSWORD: vnwa123456
       MINIO_BROWSER_REDIRECT_URL: http://127.0.0.1:9001
-
     command: server /data --console-address ":9001"
 
   minio-init:
     image: minio/mc:latest
     depends_on:
       - minio
-    volumes:
-      - ./public-read-no-list.json:/policy.json
     entrypoint: >
-      /bin/sh -c "
-      sleep 5;
-      mc alias set myminio http://minio:9000 vnwaadmin vnwa123456;
-      mc mb -p myminio/vnwa || true;
-      mc anonymous set-json /policy.json myminio/vnwa;
-      exit 0;
-      "
+      /bin/sh -c " until mc alias set myminio http://minio:9000 vnwaadmin vnwa123456; do
+        echo 'waiting for minio...';
+        sleep 2;
+      done; mc mb -p myminio/vnwa || true; mc anonymous set download myminio/vnwa; exit 0; "

@@ -4,11 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
   OneToMany,
-  JoinColumn,
 } from 'typeorm';
-import { CrawlSource } from './crawl-source.entity';
 import { CrawlJob } from './crawl-job.entity';
 
 export enum CrawlMangaStatus {
@@ -23,12 +20,8 @@ export class CrawlManga {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int' })
-  sourceId: number;
-
-  @ManyToOne(() => CrawlSource, (source) => source.crawlMangas)
-  @JoinColumn({ name: 'sourceId' })
-  source: CrawlSource;
+  @Column({ type: 'varchar', length: 255 })
+  sourceName: string; // Domain name (e.g., 'manga18.me')
 
   @Column({ type: 'varchar', length: 1000 })
   crawlUrl: string;
@@ -38,6 +31,9 @@ export class CrawlManga {
 
   @Column({ type: 'varchar', length: 500, nullable: true })
   slug: string | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  avatar: string | null;
 
   @Column({ type: 'int', nullable: true })
   vnwaMangaId: number | null;

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\MangaBadge;
+use App\Models\MangaServer;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Str;
@@ -28,5 +29,11 @@ class MangaBadegeSeeder extends Seeder
                 'slug' => Str::slug($badge),
             ]);
         }
-    }
+        MangaServer::firstOrCreate(
+            ['name' => 'Server 1'],
+        ['description' => 'Default manga server']
+    );
+
+}
+
 }

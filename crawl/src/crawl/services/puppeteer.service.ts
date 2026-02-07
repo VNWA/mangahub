@@ -1,12 +1,20 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { BrowserPoolService } from '../utils/browser-pool';
 
 @Injectable()
 export class PuppeteerService {
+  constructor(private readonly browserPool: BrowserPoolService) {}
+
   async init(): Promise<void> {
-    throw new NotImplementedException('init is not implemented');
+    // Browser pool tự động khởi tạo khi cần
+    // Không cần làm gì thêm
   }
 
   async close(): Promise<void> {
-    throw new NotImplementedException('close is not implemented');
+    await this.browserPool.closeAll();
+  }
+
+  getStats() {
+    return this.browserPool.getStats();
   }
 }

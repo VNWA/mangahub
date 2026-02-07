@@ -20,7 +20,6 @@ export class CrawlJobService {
     const queryBuilder = this.crawlJobRepository
       .createQueryBuilder('job')
       .leftJoinAndSelect('job.crawlManga', 'crawlManga')
-      .leftJoinAndSelect('crawlManga.source', 'source')
       .orderBy('job.createdAt', 'DESC');
 
     if (options.crawlMangaId) {
@@ -45,7 +44,7 @@ export class CrawlJobService {
   async findOne(id: number): Promise<CrawlJob> {
     const job = await this.crawlJobRepository.findOne({
       where: { id },
-      relations: ['crawlManga', 'crawlManga.source'],
+      relations: ['crawlManga'],
     });
 
     if (!job) {

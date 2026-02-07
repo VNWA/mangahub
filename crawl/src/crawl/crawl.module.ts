@@ -15,6 +15,13 @@ import { VnwaSyncService } from './services/vnwa-sync.service';
 import { CrawlQueueService } from './queue/crawl-queue.service';
 import { CrawlProcessor } from './queue/crawl.processor';
 import { CrawlSchedulerService } from './scheduler/crawl-scheduler.service';
+import { BrowserPoolService } from './utils/browser-pool';
+import { Manga18MeService } from './services/crawls/manga18-me.service';
+import { MangadistrictComService } from './services/crawls/mangadistrict-com.service';
+import { OmegascansOrgService } from './services/crawls/omegascans-org.service';
+import { CrawlServiceRegistry } from './services/crawls/crawl-service-registry';
+import { MinIOService } from './services/minio.service';
+import { ImageProcessingService } from './services/image-processing.service';
 
 @Module({
   imports: [
@@ -41,6 +48,13 @@ import { CrawlSchedulerService } from './scheduler/crawl-scheduler.service';
   ],
   controllers: [CrawlMangaController, CrawlJobController],
   providers: [
+    BrowserPoolService,
+    Manga18MeService,
+    MangadistrictComService,
+    OmegascansOrgService,
+    CrawlServiceRegistry,
+    MinIOService,
+    ImageProcessingService,
     CrawlMangaService,
     CrawlJobService,
     CrawlEngineService,

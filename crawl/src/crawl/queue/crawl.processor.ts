@@ -7,7 +7,13 @@ export interface CrawlJobData {
   type: 'full' | 'update';
 }
 
-@Processor('crawl')
+// Get concurrency from env (BullMQ decorator doesn't support dependency injection)
+// Có thể điều chỉnh qua CRAWL_CONCURRENCY trong .env
+const CRAWL_CONCURRENCY = parseInt(process.env.CRAWL_CONCURRENCY || '3', 10);
+
+@Processor('crawl', {
+  concurrency: CRAWL_CONCURRENCY, // Chạy song song N jobs (configurable via env)
+})
 export class CrawlProcessor extends WorkerHost {
   constructor(private readonly crawlEngineService: CrawlEngineService) {
     super();
@@ -16,8 +22,12 @@ export class CrawlProcessor extends WorkerHost {
   async process(job: Job<CrawlJobData>): Promise<void> {
     const { crawlMangaId, type } = job.data;
     
-    // This will be implemented when crawl logic is added
-    // For now, it's a skeleton
-    await this.crawlEngineService.runMangaCrawl(crawlMangaId);
+    if (type === 'full') {
+      await this.crawlEngineService.crawlDetail(crawlMangaId);
+    } else if (type === 'update') {
+      await this.crawlEngineService.crawlChapters(crawlMangaId);
+    } else {
+      await this.crawlEngineService.runMangaCrawl(crawlMangaId);
+    }
   }
 }

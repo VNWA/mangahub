@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class CreateCrawlMangasTable1738000000001
   implements MigrationInterface
@@ -16,8 +16,10 @@ export class CreateCrawlMangasTable1738000000001
             generationStrategy: 'increment',
           },
           {
-            name: 'sourceId',
-            type: 'int',
+            name: 'sourceName',
+            type: 'varchar',
+            length: '255',
+            comment: 'Domain name of the crawl source (e.g., manga18.me)',
           },
           {
             name: 'crawlUrl',
@@ -35,6 +37,13 @@ export class CreateCrawlMangasTable1738000000001
             type: 'varchar',
             length: '500',
             isNullable: true,
+          },
+          {
+            name: 'avatar',
+            type: 'varchar',
+            length: '500',
+            isNullable: true,
+            comment: 'Path to avatar image in MinIO',
           },
           {
             name: 'vnwaMangaId',
@@ -73,28 +82,9 @@ export class CreateCrawlMangasTable1738000000001
       }),
       true,
     );
-
-    await queryRunner.createForeignKey(
-      'crawl_mangas',
-      new TableForeignKey({
-        columnNames: ['sourceId'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'crawl_sources',
-        onDelete: 'CASCADE',
-      }),
-    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    const table = await queryRunner.getTable('crawl_mangas');
-    if (table) {
-      const foreignKey = table.foreignKeys.find(
-        (fk) => fk.columnNames.indexOf('sourceId') !== -1,
-      );
-      if (foreignKey) {
-        await queryRunner.dropForeignKey('crawl_mangas', foreignKey);
-      }
-    }
     await queryRunner.dropTable('crawl_mangas');
   }
 }

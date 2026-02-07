@@ -1,16 +1,29 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { CrawlServiceRegistry } from './crawls/crawl-service-registry';
+import { MangaSummary } from '../types/manga.types';
 
 @Injectable()
 export class HtmlParserService {
-  async parseManga(html: string, url: string): Promise<any> {
-    throw new NotImplementedException('parseManga is not implemented');
+  constructor(private readonly crawlServiceRegistry: CrawlServiceRegistry) {}
+
+  async parseManga(url: string): Promise<MangaSummary> {
+    const service = this.crawlServiceRegistry.getServiceByUrl(url);
+    if (!service) {
+      throw new Error(`No crawl service found for URL: ${url}`);
+    }
+    return service.crawlDetailOnly(url);
   }
 
-  async parseChapters(html: string, url: string): Promise<any[]> {
-    throw new NotImplementedException('parseChapters is not implemented');
+  async parseChapters(url: string): Promise<any[]> {
+    const manga = await this.parseManga(url);
+    return manga.chapters;
   }
 
-  async parseImages(html: string, url: string): Promise<string[]> {
-    throw new NotImplementedException('parseImages is not implemented');
+  async parseImages(chapterUrl: string): Promise<string[]> {
+    const service = this.crawlServiceRegistry.getServiceByUrl(chapterUrl);
+    if (!service) {
+      throw new Error(`No crawl service found for URL: ${chapterUrl}`);
+    }
+    return service.crawlChapterImages(chapterUrl);
   }
 }
